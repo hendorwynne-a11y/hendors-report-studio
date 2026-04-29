@@ -45,16 +45,14 @@ def home():
     return send_from_directory(APP_DIR / "static", "index.html")
 
 @app.route("/api/login", methods=["POST"])
-def login():
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.json
-    username = data.get("username","").lower()
-    password = data.get("password","")
+    username = data.get("username", "").lower()
+    password = data.get("password", "")
 
-    # 🔓 Hard fallback (guaranteed login)
     if username == "admin" and password in ["admin123", "HendorSecure123!"]:
-        session["user"] = {"username":"admin","role":"admin"}
+        session["user"] = {"username": "admin", "role": "admin"}
         return jsonify(ok=True)
 
     con = db()
@@ -69,7 +67,6 @@ def login():
         return jsonify(ok=True)
 
     return jsonify(ok=False), 401
-
 @app.route("/api/change-password", methods=["POST"])
 def change_password():
     if "user" not in session:
