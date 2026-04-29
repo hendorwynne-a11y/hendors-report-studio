@@ -141,6 +141,8 @@ def admin_setup():
 @app.route("/health")
 def health():
     return "ok"
+    
+init_db()
 
 if __name__ == "__main__":
     init_db()
