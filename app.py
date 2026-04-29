@@ -1,15 +1,14 @@
 from flask import Flask, request, jsonify, send_from_directory, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import sqlite3, os
 
 APP_DIR = Path(__file__).parent.resolve()
-DB_PATH = APP_DIR / "hendors_secure.db"
+DB_PATH = APP_DIR / "hendors.db"
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key")
-app.permanent_session_lifetime = timedelta(minutes=30)
+app.secret_key = "super-secret-key"
 
 def db():
     con = sqlite3.connect(DB_PATH)
@@ -29,12 +28,11 @@ def init_db():
     )
     """)
 
-    # Only create admin if database empty
     cur.execute("SELECT COUNT(*) as c FROM users")
     if cur.fetchone()["c"] == 0:
         cur.execute(
             "INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
-            ("admin", generate_password_hash("ChangeMe123!"), "admin")
+            ("admin", generate_password_hash("admin123"), "admin")
         )
 
     con.commit()
@@ -44,14 +42,13 @@ def init_db():
 def home():
     return send_from_directory(APP_DIR / "static", "index.html")
 
-@app.route("/api/login", methods=["POST"])
+# 🔐 LOGIN
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.json
-    username = data.get("username", "").lower()
-    password = data.get("password", "")
+    username = data.get("username","").lower()
+    password = data.get("password","")
 
-   
     con = db()
     user = con.execute(
         "SELECT * FROM users WHERE lower(username)=?",
@@ -64,6 +61,8 @@ def login():
         return jsonify(ok=True)
 
     return jsonify(ok=False), 401
+
+# 🔐 CHANGE PASSWORD
 @app.route("/api/change-password", methods=["POST"])
 def change_password():
     if "user" not in session:
@@ -82,6 +81,7 @@ def change_password():
 
     return jsonify(ok=True)
 
+# 👤 ADMIN: CREATE USER
 @app.route("/api/create-user", methods=["POST"])
 def create_user():
     if session.get("user", {}).get("role") != "admin":
@@ -103,41 +103,45 @@ def create_user():
 
     return jsonify(ok=True)
 
-@app.route("/health")
-def health():
-    return "ok"
-@app.route("/api/admin-setup", methods=["POST"])
+# 👤 ADMIN: LIST USERS
+@app.route("/api/users")
+def users():
+    if session.get("user", {}).get("role") != "admin":
+        return jsonify(error="Admin only"), 403
+
+    con = db()
+    rows = con.execute("SELECT username,role FROM users").fetchall()
+    con.close()
+
+    return jsonify([dict(r) for r in rows])
+
+# 🚀 QUICK SETUP
+@app.route("/api/admin-setup")
 def admin_setup():
     con = db()
 
-    # Update admin password
-    con.execute(
-        "UPDATE users SET password_hash=? WHERE username='admin'",
-        (generate_password_hash("HendorSecure123!"),)
-    )
-
-    # Create sonographer
-    try:
-        con.execute(
-            "INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
-            ("sono", generate_password_hash("Sono123!"), "sonographer")
-        )
-    except:
-        pass
-
-    # Create reception
-    try:
-        con.execute(
-            "INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
-            ("rec", generate_password_hash("Rec123!"), "reception")
-        )
-    except:
-        pass
+    for u,p,r in [
+        ("admin","admin123","admin"),
+        ("sono","Sono123!","sonographer"),
+        ("rec","Rec123!","reception")
+    ]:
+        try:
+            con.execute(
+                "INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
+                (u, generate_password_hash(p), r)
+            )
+        except:
+            pass
 
     con.commit()
     con.close()
 
-    return jsonify(ok=True, message="Setup complete")
+    return jsonify(ok=True)
+
+@app.route("/health")
+def health():
+    return "ok"
+
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 1420)))
+    app.run(host="0.0.0.0", port=1420)
