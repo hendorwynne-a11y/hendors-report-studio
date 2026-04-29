@@ -3,7 +3,15 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font-family:Arial;font-size:12px}.title{height:30px;background:#f3f4f6;color:#111;padding:7px 10px;font-weight:bold}.login{width:430px;margin:120px auto;background:var(--panel);border:1px solid var(--line);padding:20px}.app{display:grid;grid-template-columns:390px 1fr 700px;gap:6px;padding:5px;height:calc(100vh - 30px)}.panel{border:1px solid var(--line);background:var(--panel);padding:6px;overflow:auto}fieldset{border:1px solid var(--line);margin:0 0 8px 0;padding:8px}legend,label{font-weight:bold}label{display:block;margin-top:6px}input,textarea,select{background:var(--field);border:1px solid #50657a;color:#fff;padding:5px;width:100%;font-size:12px}textarea{resize:vertical;font-family:Consolas}button{width:100%;padding:9px;border:0;color:white;font-weight:bold;margin:3px 0;cursor:pointer}.green{background:var(--green)}.blue{background:var(--blue)}.cyan{background:var(--cyan)}.purple{background:var(--purple)}.orange{background:var(--orange);color:#111}.red{background:var(--red)}.dark{background:#1f2937}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}.table{width:100%;border-collapse:collapse}.table th,.table td{border:1px solid var(--line);padding:5px}.hidden{display:none}.small{font-size:11px;color:#cbd5e1}#report_body{height:52vh}#transcript{height:105px}#prompt{height:90px}#measurements{height:120px}#comment,#impression{height:135px}
 </style></head><body><div class="title">🪶 Hendors Report Studio v14.2</div>
 <div id="login" class="login"><h2>Login</h2><div class="small">Cloud/Web Mirror. Default: admin/admin123, sonographer/sono123</div><label>Username</label><input id="username" value="admin"><label>Password</label><input id="password" type="password" value="admin123"><button class="green" onclick="login()">Login</button><div id="login_msg" class="small"></div></div>
-<div id="app" class="app hidden">
+<div id="app" class="app hidden"><fieldset>
+<legend>Admin Panel</legend>
+
+<button class="green" onclick="changePassword()">Change My Password</button>
+<button class="blue" onclick="createUser()">Create New User</button>
+<button class="cyan" onclick="showUsers()">Show Users</button>
+
+<div id="admin_users" class="small"></div>
+</fieldset>
 <section class="panel"><fieldset><legend>Settings</legend><label>OpenAI API Key</label><input type="password" value="********************************"><label>Text Model</label><input value="gpt-4o-mini"><label>Speech Model</label><input value="gpt-4o-transcribe"><label>Root Report Folder</label><div class="grid2" style="grid-template-columns:1fr 45px"><input value="Cloud/Reports"><button class="dark">...</button></div></fieldset>
 <fieldset><legend>Report Sign-off</legend><label><input type="checkbox" checked style="width:auto"> Add signature to exported reports</label><label>Name</label><input value="Hendor L. Wynne"><label>Title</label><input value="Sonographer"><label>Practice</label><input value="Hendor's Diagnostics"></fieldset>
 <fieldset><legend>Export Folder Rules</legend><label><input type="checkbox" checked style="width:auto"> Create doctor subfolders automatically</label><label><input type="checkbox" style="width:auto"> Ask me where to export each time</label><label><input type="checkbox" checked style="width:auto"> Dark mode</label><button class="dark">Save Settings</button></fieldset>
@@ -29,5 +37,44 @@ function shorten(){report_body.value=report_body.value.replace(/\s+/g," ").trim(
 function printReport(){let w=window.open("");w.document.write("<pre style='white-space:pre-wrap;font-family:Arial'>"+report_body.value+"</pre>");w.print();}
 async function pasteClipboard(){try{transcript.value+=await navigator.clipboard.readText();}catch(e){alert("Clipboard text unavailable");}}
 function startDictation(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert("Use Chrome/Edge for dictation");return;}recognition=new SR();recognition.continuous=true;recognition.lang="en-ZA";recognition.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)transcript.value+=e.results[i][0].transcript+" ";}};recognition.start();}
-function stopDictation(){if(recognition)recognition.stop();}exam_date.value=new Date().toISOString().slice(0,10);
+async function changePassword(){
+    let p = prompt("Enter new password:");
+    if(!p) return;
+
+    await api("/api/change-password", {
+        method:"POST",
+        body:JSON.stringify({new_password:p})
+    });
+
+    alert("Password changed");
+}
+
+async function createUser(){
+    let username = prompt("New username:");
+    if(!username) return;
+
+    let password = prompt("Password:");
+    if(!password) return;
+
+    let role = prompt("Role: admin / sonographer / reception");
+    if(!role) return;
+
+    await api("/api/create-user", {
+        method:"POST",
+        body:JSON.stringify({
+            username:username,
+            password:password,
+            role:role
+        })
+    });
+
+    alert("User created");
+}
+
+async function showUsers(){
+    let users = await api("/api/users");
+    document.getElementById("admin_users").innerHTML =
+        users.map(u => u.username + " - " + u.role).join("<br>");
+}
+  function stopDictation(){if(recognition)recognition.stop();}exam_date.value=new Date().toISOString().slice(0,10);
 </script></body></html>
