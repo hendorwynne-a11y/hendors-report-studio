@@ -51,10 +51,7 @@ def login():
     username = data.get("username", "").lower()
     password = data.get("password", "")
 
-    if username == "admin" and password in ["admin123", "HendorSecure123!"]:
-        session["user"] = {"username": "admin", "role": "admin"}
-        return jsonify(ok=True)
-
+   
     con = db()
     user = con.execute(
         "SELECT * FROM users WHERE lower(username)=?",
