@@ -106,7 +106,38 @@ def create_user():
 @app.route("/health")
 def health():
     return "ok"
+@app.route("/api/admin-setup", methods=["POST"])
+def admin_setup():
+    con = db()
 
+    # Update admin password
+    con.execute(
+        "UPDATE users SET password_hash=? WHERE username='admin'",
+        (generate_password_hash("HendorSecure123!"),)
+    )
+
+    # Create sonographer
+    try:
+        con.execute(
+            "INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
+            ("sono", generate_password_hash("Sono123!"), "sonographer")
+        )
+    except:
+        pass
+
+    # Create reception
+    try:
+        con.execute(
+            "INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
+            ("rec", generate_password_hash("Rec123!"), "reception")
+        )
+    except:
+        pass
+
+    con.commit()
+    con.close()
+
+    return jsonify(ok=True, message="Setup complete")
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 1420)))
