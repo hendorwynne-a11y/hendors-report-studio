@@ -37,7 +37,8 @@ button{width:100%;padding:9px;border:0;color:#fff;font-weight:bold;margin:3px 0;
 <script>
 const ids=["patient_name","patient_id_file","exam_date","age","gender","dob","phone","email","perf_physician","operator","study_title","referring_doctor","measurements","report_body","comment","impression","transcript","prompt"];let recognition,layoutUnlocked=false;
 async function api(url,opt={}){opt.headers=Object.assign({"Content-Type":"application/json"},opt.headers||{});let r=await fetch(url,opt);if(!r.ok)throw new Error(await r.text());return await r.json();}
-async function login(){try{await api("/api/login",{method:"POST",body:JSON.stringify({username:username.value,password:password.value})});login.classList.add("hidden");main.classList.remove("hidden");loadLayout();lockLayout();await loadDoctors();await loadCases();}catch(e){login_msg.textContent="Login failed";}}
+async function login(){try{await api("/api/login",{method:"POST",body:JSON.stringify({username:username.value,password:password.value})});document.getElementById("login").classList.add("hidden");
+document.getElementById("main").classList.remove("hidden");loadLayout();lockLayout();await loadDoctors();await loadCases();}catch(e){login_msg.textContent="Login failed";}}
 async function logout(){try{await api("/api/logout",{method:"POST"});}catch(e){}location.reload();}
 function collect(){let d={};ids.forEach(id=>d[id]=document.getElementById(id).value);return d;}
 async function loadDoctors(){let rows=await api("/api/doctors");referring_doctor.innerHTML=rows.map(x=>`<option>${x.name}</option>`).join("");doctor_table.innerHTML="<tr><th>Doctor</th><th>Email</th><th>WhatsApp</th></tr>"+rows.map(x=>`<tr><td>${x.name}</td><td>${x.email}</td><td>${x.whatsapp}</td></tr>`).join("");}
