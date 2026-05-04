@@ -194,17 +194,35 @@ function v16calc(){
   document.getElementById('v16_due').value=(cash-paid).toFixed(2);
 }
 
-function v16save(){
-  let p={
-    name:document.getElementById('v16_name').value,
-    study:document.getElementById('v16_study').value,
-    due:document.getElementById('v16_due').value,
-    date:new Date().toISOString()
+const SUPABASE_URL = "https://acqahzuiozxfuqymgqr.supabase.co";
+const SUPABASE_KEY = "https://acqahzuiozxfuqyqmgqr.supabase.co/rest/v1/";
+
+async function v16save(){
+  let p = {
+    name: document.getElementById('v16_name').value,
+    study: document.getElementById('v16_study').value,
+    cash: Number(document.getElementById('v16_cash').value||0),
+    paid: Number(document.getElementById('v16_paid').value||0),
+    due: Number(document.getElementById('v16_due').value||0),
+    created_at: new Date().toISOString()
   };
-  let arr=JSON.parse(localStorage.getItem('v16patients')||'[]');
-  arr.push(p);
-  localStorage.setItem('v16patients',JSON.stringify(arr));
-  alert('Saved locally (next step = cloud)');
+
+  let res = await fetch(SUPABASE_URL + "/rest/v1/patients", {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json",
+      "Prefer": "return=minimal"
+    },
+    body: JSON.stringify(p)
+  });
+
+  if(res.ok){
+    alert("Saved to CLOUD ✅");
+  } else {
+    alert("Error saving ❌");
+  }
 }
 </script>
 
