@@ -223,7 +223,85 @@ async function v16save(){
   } else {
     alert("Error saving ❌");
   }
+}<script>
+function getVal(id){
+  const el = document.getElementById(id);
+  return el ? el.value : "";
 }
+
+function setVal(id, value){
+  const el = document.getElementById(id);
+  if(el) el.value = value || "";
+}
+
+function saveSettings(){
+  const settings = {
+    apiKey: getVal("apiKey"),
+    textModel: getVal("textModel"),
+    speechModel: getVal("speechModel"),
+    rootFolder: getVal("rootFolder"),
+    prompt: getVal("prompt"),
+    signName: getVal("signName"),
+    signTitle: getVal("signTitle"),
+    signPractice: getVal("signPractice")
+  };
+
+  localStorage.setItem("hendors_settings", JSON.stringify(settings));
+  alert("Settings saved.");
+}
+
+function loadSettings(){
+  const saved = localStorage.getItem("hendors_settings");
+  if(!saved) return;
+
+  const settings = JSON.parse(saved);
+  Object.keys(settings).forEach(id => setVal(id, settings[id]));
+}
+
+function addDoctor(){
+  const doctor = {
+    name: prompt("Doctor name:") || "",
+    email: prompt("Doctor email:") || "",
+    whatsapp: prompt("Doctor WhatsApp:") || ""
+  };
+
+  if(!doctor.name){
+    alert("Doctor not saved. No name entered.");
+    return;
+  }
+
+  const doctors = JSON.parse(localStorage.getItem("hendors_doctors") || "[]");
+  doctors.push(doctor);
+  localStorage.setItem("hendors_doctors", JSON.stringify(doctors));
+  alert("Doctor saved.");
+}
+
+function saveCase(){
+  const patientName = getVal("patient_name") || getVal("patientName") || getVal("patient");
+  const caseData = {
+    patientName: patientName,
+    date: new Date().toISOString(),
+    reportBody: getVal("report_body") || getVal("reportBody"),
+    comment: getVal("comment"),
+    impression: getVal("impression"),
+    transcript: getVal("transcript"),
+    prompt: getVal("prompt")
+  };
+
+  if(!caseData.patientName){
+    alert("Please enter patient name before saving case.");
+    return;
+  }
+
+  const cases = JSON.parse(localStorage.getItem("hendors_cases") || "[]");
+  cases.push(caseData);
+  localStorage.setItem("hendors_cases", JSON.stringify(cases));
+
+  alert("Case saved.");
+}
+
+window.addEventListener("load", loadSettings);
+</script>
 </script>
 
 <!-- ================= V16 RECEPTION + BILLING END ================= -->
