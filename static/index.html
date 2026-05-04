@@ -159,3 +159,53 @@ exam_date.value=new Date().toISOString().slice(0,10);
 </body>
 </html>
 <!-- END OF ORIGINAL V14.2 -->
+<!-- ================= V16 RECEPTION + BILLING START ================= -->
+
+<div style="position:fixed;bottom:10px;right:10px;background:#0b2238;border:1px solid #8aa0b4;padding:10px;width:300px;z-index:9999">
+  <b>V16 Quick Panel</b>
+
+  <label>Patient</label>
+  <input id="v16_name">
+
+  <label>Study</label>
+  <select id="v16_study">
+    <option>Abdomen ultrasound</option>
+    <option>KUB ultrasound</option>
+    <option>Pelvic ultrasound</option>
+  </select>
+
+  <label>Cash (R)</label>
+  <input id="v16_cash" value="1300">
+
+  <label>Paid (R)</label>
+  <input id="v16_paid" value="0">
+
+  <label>Due (R)</label>
+  <input id="v16_due">
+
+  <button onclick="v16calc()" style="width:100%;background:#17a9dc">Calculate</button>
+  <button onclick="v16save()" style="width:100%;background:#16c18d">Save (local)</button>
+</div>
+
+<script>
+function v16calc(){
+  let cash=Number(document.getElementById('v16_cash').value||0);
+  let paid=Number(document.getElementById('v16_paid').value||0);
+  document.getElementById('v16_due').value=(cash-paid).toFixed(2);
+}
+
+function v16save(){
+  let p={
+    name:document.getElementById('v16_name').value,
+    study:document.getElementById('v16_study').value,
+    due:document.getElementById('v16_due').value,
+    date:new Date().toISOString()
+  };
+  let arr=JSON.parse(localStorage.getItem('v16patients')||'[]');
+  arr.push(p);
+  localStorage.setItem('v16patients',JSON.stringify(arr));
+  alert('Saved locally (next step = cloud)');
+}
+</script>
+
+<!-- ================= V16 RECEPTION + BILLING END ================= -->
