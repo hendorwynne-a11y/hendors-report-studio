@@ -1,307 +1,156 @@
-<!-- BACKUP V14.2 BEFORE V16 UPGRADE --><!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hendors Report Studio v14.2</title>
+<title>Hendors Report Studio V16</title>
 <style>
-:root{--bg:#061523;--panel:#0b2135;--line:#99a9bb;--field:#071726;--green:#17bf8f;--blue:#2563eb;--cyan:#19a7df;--purple:#7c3aed;--orange:#f59e0b;--red:#e11d48}
+:root{--bg:#061523;--panel:#0b2135;--line:#9aa9bb;--field:#071726;--green:#18bf8f;--blue:#2563eb;--cyan:#19a7df;--purple:#7c3aed;--orange:#f59e0b;--red:#e11d48}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:#fff;font-family:Arial,Helvetica,sans-serif;font-size:12px;overflow:hidden}
-.title{height:32px;background:#f3f4f6;color:#111;padding:7px 10px;font-weight:bold}
-.login{width:430px;margin:120px auto;background:var(--panel);border:1px solid var(--line);padding:20px}
-.hidden{display:none!important}
-.toolbar{height:40px;background:#071827;border-bottom:1px solid #789;padding:5px 8px;display:flex;gap:6px;align-items:center}
-.toolbar button{width:auto;padding:7px 12px;margin:0}
-.workspace{position:relative;width:100vw;height:calc(100vh - 72px);overflow:auto;background:#061523}
-.win{position:absolute;background:var(--panel);border:1px solid var(--line);min-width:220px;min-height:90px;overflow:auto;resize:both}
-.win.locked{resize:none}
-.win-title{height:26px;background:#092038;border-bottom:1px solid #6f8398;padding:5px 8px;font-weight:bold;cursor:move;user-select:none}
-.win.locked .win-title{cursor:default}
-.win-body{padding:6px;height:calc(100% - 26px)}
+body{margin:0;background:var(--bg);color:#fff;font-family:Arial,Segoe UI,sans-serif;font-size:12px;overflow:hidden}
+.title{height:30px;background:#f3f4f6;color:#111;padding:7px 10px;font-weight:bold}
+.toolbar{height:42px;background:#071827;border-bottom:1px solid #789;padding:5px;display:flex;gap:5px;align-items:center}
+button{border:0;color:#fff;font-weight:bold;padding:9px 13px;cursor:pointer}
+button:hover{filter:brightness(1.12)}
+.green{background:var(--green)}.blue{background:var(--blue)}.cyan{background:var(--cyan)}.purple{background:var(--purple)}.orange{background:var(--orange)}.red{background:var(--red)}.dark{background:#1f2937}
+.workspace{position:relative;width:100vw;height:calc(100vh - 72px);overflow:auto}
+.win{position:absolute;background:var(--panel);border:1px solid var(--line);overflow:auto;min-width:220px;min-height:110px}
+.win-title{background:#092038;border-bottom:1px solid #6f8398;padding:5px 8px;font-weight:bold;cursor:move;user-select:none}
+.win-body{padding:8px}
+.locked .win-title{cursor:default}
+.resizer{position:absolute;right:0;bottom:0;width:14px;height:14px;background:#9ca3af;cursor:nwse-resize}
 fieldset{border:1px solid var(--line);margin:0 0 8px 0;padding:8px}
-legend,label{font-weight:bold}
-label{display:block;margin-top:6px}
-input,textarea,select{background:var(--field);border:1px solid #50657a;color:#fff;padding:5px;width:100%;font-size:12px}
-textarea{resize:vertical;font-family:Consolas,monospace}
-button{width:100%;padding:9px;border:0;color:#fff;font-weight:bold;margin:3px 0;cursor:pointer}
-.green{background:var(--green)}.blue{background:var(--blue)}.cyan{background:var(--cyan)}.purple{background:var(--purple)}.orange{background:var(--orange);color:#111}.red{background:var(--red)}.dark{background:#1f2937}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
-.table{width:100%;border-collapse:collapse}.table th,.table td{border:1px solid var(--line);padding:5px}
-.small{font-size:11px;color:#cbd5e1}.hint{color:#9ee;font-size:11px}
-#report_body,#measurements,#comment,#impression,#transcript,#prompt{height:100%}
+legend{font-weight:bold}
+label{display:block;margin-top:6px;font-weight:bold}
+input,select,textarea{width:100%;background:var(--field);color:#fff;border:1px solid #6f8398;padding:6px;font-size:12px}
+textarea{resize:none;min-height:90px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #6f8398;padding:5px;text-align:left}
+tr:hover{background:#12385b;cursor:pointer}
+.full{width:100%;margin-top:4px}.small{font-size:11px;color:#a7f3d0}
+.login{position:fixed;inset:0;background:#061523;z-index:9999;display:flex;align-items:center;justify-content:center}
+.login-card{width:410px;background:#0b2135;border:1px solid var(--line);padding:24px}.hidden{display:none!important}
 </style>
 </head>
-<body>
-<div class="title">🪶 Hendors Report Studio v14.2</div>
-
-<div id="login" class="login">
-<h2>Login</h2>
-<div class="small">Cloud/Web Mirror</div>
-<label>Username</label><input id="username" value="admin">
-<label>Password</label><input id="password" type="password" value="admin123">
-<button class="green" onclick="login()">Login</button>
-<div id="login_msg" class="small"></div>
+<body class="locked">
+<div id="loginScreen" class="login">
+  <div class="login-card">
+    <h2>Hendors Report Studio V16</h2>
+    <label>Username</label><input id="loginUser" value="admin">
+    <label>Password</label><input id="loginPass" type="password" placeholder="admin123">
+    <button class="green full" onclick="login()">Login</button>
+    <button class="blue full" onclick="changePassword()">Change Password</button>
+    <p class="small">Default: admin / admin123</p>
+  </div>
 </div>
 
-<div id="main" class="hidden">
+<div class="title">🪶 Hendors Report Studio V16</div>
 <div class="toolbar">
-<button class="orange" onclick="unlockLayout()">Unlock Layout</button>
-<button class="green" onclick="lockLayout()">Lock Layout</button>
-<button class="blue" onclick="saveLayout()">Save Layout</button>
-<button class="red" onclick="resetLayout()">Reset Layout</button>
-<button class="dark" onclick="logout()">Logout</button>
-<span id="layout_hint" class="hint">Layout locked.</span>
+  <button class="orange" onclick="unlockLayout()">Unlock Layout</button>
+  <button class="green" onclick="lockLayout()">Lock Layout</button>
+  <button class="blue" onclick="saveLayout()">Save Layout</button>
+  <button class="red" onclick="resetLayout()">Reset Layout</button>
+  <button class="dark" onclick="logout()">Logout</button>
+  <span id="status" class="small">Ready.</span>
 </div>
 
 <div id="workspace" class="workspace">
 
-<section class="win locked" id="win_settings" style="left:5px;top:5px;width:390px;height:530px"><div class="win-title">Settings</div><div class="win-body">
+<section class="win" id="settingsWin" style="left:5px;top:5px;width:350px;height:92%">
+<div class="win-title">Settings</div><div class="win-body">
 <fieldset><legend>Admin Panel</legend>
-<button class="green" onclick="changePassword()">Change My Password</button>
-<button class="blue" onclick="createUser()">Create New User</button>
-<button class="cyan" onclick="showUsers()">Show Users</button>
-<div id="admin_users" class="small"></div>
+<button class="green full" onclick="changePassword()">Change My Password</button>
+<button class="blue full" onclick="createUser()">Create New User</button>
+<button class="cyan full" onclick="showUsers()">Show Users</button>
 </fieldset>
 <fieldset><legend>Settings</legend>
-<label>OpenAI API Key</label><input id="api_key" type="password" placeholder="Optional">
-<label>Text Model</label><input value="gpt-4o-mini">
-<label>Speech Model</label><input value="gpt-4o-transcribe">
-<label>Root Report Folder</label><div class="grid2" style="grid-template-columns:1fr 45px"><input value="Cloud/Reports"><button class="dark" onclick="alert('Online version saves/downloads through the browser.')">...</button></div>
+<label>OpenAI API Key</label><input id="apiKey" type="password" placeholder="Optional">
+<label>Text Model</label><input id="textModel" value="gpt-4o-mini">
+<label>Speech Model</label><input id="speechModel" value="gpt-4o-transcribe">
+<label>Supabase URL</label><input id="supabaseUrl" value="https://acqahzuiozxfuqymgqr.supabase.co">
+<label>Supabase Publishable Key</label><input id="supabaseKey" placeholder="Paste publishable key here">
+<label>Root Report Folder</label><input id="rootFolder" value="Cloud/Reports">
+<button class="blue full" onclick="saveSettings()">SAVE SETTINGS</button>
 </fieldset>
-<fieldset><legend>Report Sign-off</legend><label><input type="checkbox" checked style="width:auto"> Add signature to exported reports</label><label>Name</label><input value="Hendor L. Wynne"><label>Title</label><input value="Sonographer"><label>Practice</label><input value="Hendor's Diagnostics"></fieldset>
-</div></section>
+<fieldset><legend>Report Sign-off</legend>
+<label><input id="addSignature" type="checkbox" style="width:auto" checked> Add signature to exported reports</label>
+<label>Name</label><input id="signName" value="Hendor L. Wynne">
+<label>Title</label><input id="signTitle" value="Sonographer">
+<label>Practice</label><input id="signPractice" value="Hendor's Diagnostics">
+<button class="blue full" onclick="saveSettings()">SAVE SIGNATURE SETTINGS</button>
+</fieldset>
+<fieldset><legend>Referring Doctors</legend>
+<input id="docName" placeholder="Doctor"><input id="docEmail" placeholder="Email"><input id="docWhatsapp" placeholder="WhatsApp">
+<button class="dark full" onclick="addDoctor()">Add Doctor</button>
+<button class="red full" onclick="deleteSelectedDoctor()">Delete Selected Doctor</button>
+<table><thead><tr><th>Doctor</th><th>Email</th><th>WhatsApp</th></tr></thead><tbody id="doctorsTable"></tbody></table>
+</fieldset>
+<fieldset><legend>Saved Cases</legend>
+<table><thead><tr><th>Patient</th><th>Date</th></tr></thead><tbody id="casesTable"></tbody></table>
+</fieldset>
+</div><div class="resizer"></div></section>
 
-<section class="win locked" id="win_doctors" style="left:5px;top:545px;width:390px;height:245px"><div class="win-title">Referring Doctors</div><div class="win-body"><button class="dark" onclick="addDoctor()">Add Doctor</button><table class="table" id="doctor_table"></table></div></section>
-<section class="win locked" id="win_cases" style="left:5px;top:800px;width:390px;height:170px"><div class="win-title">Saved Cases</div><div class="win-body"><table class="table" id="case_table"></table></div></section>
+<section class="win" id="caseWin" style="left:360px;top:5px;width:720px;height:92%">
+<div class="win-title">Case Entry</div><div class="win-body">
+<div class="grid3">
+<div><label>Patient Name</label><input id="patient_name"></div><div><label>Patient ID / File No</label><input id="patient_id_file"></div><div><label>Exam Date</label><input id="exam_date" type="date"></div>
+<div><label>Age</label><input id="age"></div><div><label>Gender</label><input id="gender"></div><div><label>Date of Birth</label><input id="dob"></div>
+<div><label>Phone</label><input id="phone"></div><div><label>Email</label><input id="email"></div><div><label>Perf. Physician</label><input id="physician"></div>
+<div><label>Operator</label><input id="operator"></div><div><label>Study Title</label><input id="study_title" value="ULTRASOUND REPORT"></div><div><label>Referring Doctor</label><select id="refDoctor"></select></div>
+</div>
+<div class="grid3" style="margin-top:8px"><button class="green" onclick="newPatient()">NEW PATIENT</button><button class="blue" onclick="saveCase()">SAVE CASE</button><button class="cyan" onclick="loadSelectedCase()">LOAD SELECTED</button></div>
+<label>Measurements / Imported Text</label><textarea id="measurements" style="height:120px"></textarea>
+<label>Report Body</label><textarea id="report_body" style="height:300px"></textarea>
+<div class="grid2"><div><label>Comment</label><textarea id="comment" style="height:105px"></textarea></div><div><label>Impression (one line per bullet)</label><textarea id="impression" style="height:105px"></textarea></div></div>
+</div><div class="resizer"></div></section>
 
-<section class="win locked" id="win_case" style="left:405px;top:5px;width:780px;height:270px"><div class="win-title">Case Entry</div><div class="win-body">
-<div class="grid3"><div><label>Patient Name</label><input id="patient_name"></div><div><label>Patient ID / File No</label><input id="patient_id_file"></div><div><label>Exam Date</label><input id="exam_date"></div></div>
-<div class="grid3"><div><label>Age</label><input id="age"></div><div><label>Gender</label><input id="gender"></div><div><label>Date of Birth</label><input id="dob"></div></div>
-<div class="grid3"><div><label>Phone</label><input id="phone"></div><div><label>Email</label><input id="email"></div><div><label>Perf. Physician</label><input id="perf_physician"></div></div>
-<div class="grid3"><div><label>Operator</label><input id="operator"></div><div><label>Study Title</label><input id="study_title" value="ULTRASOUND REPORT"></div><div><label>Referring Doctor</label><select id="referring_doctor"></select></div></div>
-<div class="grid3"><button class="green" onclick="newPatient()">NEW PATIENT</button><button class="blue" onclick="saveCase()">SAVE CASE</button><button class="cyan" onclick="loadCases()">LOAD SELECTED</button></div>
-</div></section>
+<section class="win" id="transcriptWin" style="left:1090px;top:5px;width:430px;height:210px"><div class="win-title">Transcript</div><div class="win-body"><textarea id="transcript" style="height:155px" placeholder="Dictated text appears here..."></textarea></div><div class="resizer"></div></section>
 
-<section class="win locked" id="win_meas" style="left:405px;top:285px;width:780px;height:160px"><div class="win-title">Measurements / Imported Text</div><div class="win-body"><textarea id="measurements"></textarea></div></section>
-<section class="win locked" id="win_report" style="left:405px;top:455px;width:780px;height:520px"><div class="win-title">Report Body</div><div class="win-body"><textarea id="report_body"></textarea></div></section>
-<section class="win locked" id="win_comment" style="left:1195px;top:705px;width:330px;height:270px"><div class="win-title">Comment</div><div class="win-body"><textarea id="comment"></textarea></div></section>
-<section class="win locked" id="win_impression" style="left:1535px;top:705px;width:330px;height:270px"><div class="win-title">Impression (one line per bullet)</div><div class="win-body"><textarea id="impression"></textarea></div></section>
+<section class="win" id="promptWin" style="left:1090px;top:220px;width:430px;height:250px"><div class="win-title">AI Instructions / Prompt</div><div class="win-body">
+<textarea id="prompt" style="height:175px">Use Hendor's Diagnostics reporting style.
+Write in simple, professional medical English.
+Correct obvious dictation errors.
+Structure:
+Findings:
+Comment:
+Impression:
+Impression must use bullet points.</textarea>
+<button class="blue full" onclick="saveSettings()">SAVE API + INSTRUCTIONS</button>
+</div><div class="resizer"></div></section>
 
-<section class="win locked" id="win_transcript" style="left:1195px;top:5px;width:670px;height:230px"><div class="win-title">Transcript</div><div class="win-body"><textarea id="transcript" placeholder="Dictated text appears here..."></textarea></div></section>
-<section class="win locked" id="win_prompt" style="left:1195px;top:245px;width:670px;height:170px"><div class="win-title">AI Instructions / Prompt</div><div class="win-body"><textarea id="prompt">Use Hendor's Diagnostics style automatically. Generate a flowing narrative report, then Comment, then bullet-point Impression.</textarea></div></section>
+<section class="win" id="inputWin" style="left:1090px;top:475px;width:300px;height:285px"><div class="win-title">Input / Snip / Request</div><div class="win-body">
+<button class="green full" onclick="newPatient()">NEW PATIENT / START NEW CASE</button><button class="cyan full" onclick="alert('Press Windows key + Shift + S, snip, then paste with Ctrl+V.')">Start Windows Snip</button><button class="cyan full" onclick="pasteClipboard()">Paste Clipboard Image/Text</button><button class="purple full" onclick="alert('Image import needs desktop/server version for full report images.')">Load JPEG / PNG Screenshot</button><button class="green full" onclick="alert('AI extraction needs server OCR. This button is reserved.')">AI Extract Patient Info</button><button class="orange full" onclick="alert('Request form import reserved for desktop/server version.')">Import Request Form</button><button class="orange full" onclick="alert('Scanner access needs desktop version.')">Scan Request Form</button>
+</div><div class="resizer"></div></section>
 
-<section class="win locked" id="win_input_buttons" style="left:1195px;top:425px;width:320px;height:330px"><div class="win-title">Input / Snip / Request</div><div class="win-body">
-<div class="small">Online mode uses browser-safe actions.</div>
-<button class="green" onclick="newPatient()">NEW PATIENT / START NEW CASE</button>
-<button class="cyan" onclick="startBrowserSnipHelp()">Start Windows Snip</button>
-<button class="cyan" onclick="pasteClipboard()">Paste Clipboard Image/Text</button>
-<button class="purple" onclick="document.getElementById('file_loader').click()">Load JPEG / PNG Screenshot</button>
-<input type="file" id="file_loader" accept="image/*,.pdf" class="hidden" onchange="loadFileName(event)">
-<div id="file_name" class="small"></div>
-<button class="green" onclick="extractPatientInfo()">AI Extract Patient Info</button>
-<button class="orange" onclick="document.getElementById('request_loader').click()">Import Request Form</button>
-<input type="file" id="request_loader" accept="image/*,.pdf" class="hidden" onchange="importRequestForm(event)">
-<button class="orange" onclick="alert('Online scan needs scanner integration. Use Import Request Form for now.')">Scan Request Form</button>
-</div></section>
+<section class="win" id="dictWin" style="left:1400px;top:475px;width:280px;height:120px"><div class="win-title">Dictation</div><div class="win-body"><button class="green full" onclick="startDictation()">Start Dictation</button><button class="red full" onclick="stopDictation()">Stop Dictation</button></div><div class="resizer"></div></section>
+<section class="win" id="toolsWin" style="left:1400px;top:600px;width:280px;height:210px"><div class="win-title">AI / Report Tools</div><div class="win-body"><button class="blue full" onclick="generateReport()">Generate Report</button><button class="cyan full" onclick="generateReport()">HD Style</button><button class="purple full" onclick="shorten()">Shorten</button><button class="purple full" onclick="rewriteAI('formal')">More Formal</button><button class="cyan full" onclick="rewriteAI('rewrite')">Rewrite</button></div><div class="resizer"></div></section>
+<section class="win" id="outputWin" style="left:1090px;top:765px;width:300px;height:170px"><div class="win-title">Output</div><div class="win-body"><button class="blue" onclick="generateDocxPdf()">Generate DOCX + PDF</button><button class="green" onclick="printPdf()">Print PDF Report</button><button class="cyan" onclick="alert('Browser downloads go to Downloads folder.')">Open Output Folder</button><button class="orange" onclick="alert('Full image embed needs desktop/server version.')">Add JPEG / PNG Report Images</button></div><div class="resizer"></div></section>
+<section class="win" id="sendWin" style="left:1400px;top:815px;width:280px;height:145px"><div class="win-title">Send</div><div class="win-body"><button class="green full" onclick="emailDoctor()">Create Gmail Draft for Doctor</button><button class="green full" onclick="emailPatient()">Create Gmail Draft for Patient</button><button class="green full" onclick="sendWhatsApp()">Send via WhatsApp</button></div><div class="resizer"></div></section>
 
-<section class="win locked" id="win_dictation_buttons" style="left:1525px;top:425px;width:340px;height:150px"><div class="win-title">Dictation</div><div class="win-body"><button class="green" onclick="startDictation()">Start Dictation</button><button class="red" onclick="stopDictation()">Stop Dictation</button></div></section>
-
-<section class="win locked" id="win_ai_buttons" style="left:1525px;top:585px;width:340px;height:230px"><div class="win-title">AI / Report Tools</div><div class="win-body"><button class="blue" onclick="generate()">Generate Report</button><button class="cyan" onclick="applyHDStyle()">HD Style</button><button class="purple" onclick="shorten()">Shorten</button><button class="purple" onclick="formal()">More Formal</button><button class="cyan" onclick="rewrite()">Rewrite</button></div></section>
-
-<section class="win locked" id="win_output_buttons" style="left:1195px;top:765px;width:320px;height:210px"><div class="win-title">Output</div><div class="win-body"><button class="blue" onclick="downloadDoc()">Generate DOCX + PDF</button><button class="green" onclick="printReport()">Print PDF Report</button><button class="cyan" onclick="openOutputFolder()">Open Output Folder</button><button class="orange" onclick="document.getElementById('report_images').click()">Add JPEG / PNG Report Images</button><input type="file" id="report_images" accept="image/*" multiple class="hidden" onchange="addReportImages(event)"></div></section>
-
-<section class="win locked" id="win_send_buttons" style="left:1525px;top:825px;width:340px;height:150px"><div class="win-title">Send</div><div class="win-body"><button class="green" onclick="gmailDraftDoctor()">Create Gmail Draft for Doctor</button><button class="green" onclick="gmailDraftPatient()">Create Gmail Draft for Patient</button><button class="green" onclick="sendWhatsApp()">Send via WhatsApp</button></div></section>
-
-</div></div>
-
-<script>
-const ids=["patient_name","patient_id_file","exam_date","age","gender","dob","phone","email","perf_physician","operator","study_title","referring_doctor","measurements","report_body","comment","impression","transcript","prompt"];
-let recognition,layoutUnlocked=false,loadedFiles=[],reportImages=[];
-async function api(url,opt={}){opt.headers=Object.assign({"Content-Type":"application/json"},opt.headers||{});let r=await fetch(url,opt);if(!r.ok)throw new Error(await r.text());return await r.json();}
-async function login(){try{await api("/api/login",{method:"POST",body:JSON.stringify({username:username.value,password:password.value})});document.getElementById("login").classList.add("hidden");document.getElementById("main").classList.remove("hidden");loadLayout();lockLayout();await loadDoctors();await loadCases();}catch(e){login_msg.textContent="Login failed";}}
-async function logout(){try{await api("/api/logout",{method:"POST"});}catch(e){}location.reload();}
-function collect(){let d={};ids.forEach(id=>d[id]=document.getElementById(id).value);return d;}
-async function loadDoctors(){let rows=await api("/api/doctors");referring_doctor.innerHTML=rows.map(x=>`<option>${x.name}</option>`).join("");doctor_table.innerHTML="<tr><th>Doctor</th><th>Email</th><th>WhatsApp</th></tr>"+rows.map(x=>`<tr><td>${x.name}</td><td>${x.email}</td><td>${x.whatsapp}</td></tr>`).join("");}
-async function addDoctor(){let name=prompt("Doctor name");if(!name)return;await api("/api/doctors",{method:"POST",body:JSON.stringify({name,email:prompt("Email")||"",whatsapp:prompt("WhatsApp")||""})});loadDoctors();}
-async function saveCase(){await api("/api/cases",{method:"POST",body:JSON.stringify(collect())});loadCases();alert("Case saved");}
-async function loadCases(){let rows=await api("/api/cases");case_table.innerHTML="<tr><th>Patient</th><th>Date</th></tr>"+rows.map(x=>`<tr><td>${x.patient_name||""}</td><td>${(x.created_at||"").slice(0,10)}</td></tr>`).join("");}
-function newPatient(){ids.forEach(id=>{if(id!="prompt"&&id!="study_title")document.getElementById(id).value=""});exam_date.value=new Date().toISOString().slice(0,10);}
-async function generate(){try{let r=await api("/api/generate",{method:"POST",body:JSON.stringify(collect())});report_body.value=r.report;}catch(e){localGenerate();}}
-function localGenerate(){let imp=impression.value.trim().split(/\n+/).filter(Boolean).map(x=>"- "+x.replace(/^[-•]\s*/,"")).join("\n")||"- Clinical correlation advised";report_body.value=`${study_title.value||"ULTRASOUND REPORT"}\n\nClinical history:\n${measurements.value}\n\nFindings:\n${report_body.value||transcript.value}\n\nComment:\n${comment.value||"The ultrasound findings are described above. Clinical correlation is advised."}\n\nImpression:\n${imp}\n`;}
-function applyHDStyle(){generate();}function rewrite(){generate();}function shorten(){report_body.value=report_body.value.replace(/\s+/g," ").trim();}function formal(){report_body.value=report_body.value.replace(/\bnormal\b/gi,"within normal limits");}
-function printReport(){let w=window.open("");w.document.write("<pre style='white-space:pre-wrap;font-family:Arial;font-size:12pt'>"+escapeHtml(report_body.value)+"</pre>");w.document.close();w.print();}
-function downloadDoc(){if(!report_body.value.trim())localGenerate();const blob=new Blob([report_body.value],{type:"application/msword"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(patient_name.value||"HD_Report").replace(/\s+/g,"_")+".doc";a.click();}
-function openOutputFolder(){alert("Online browsers cannot open your Windows folder. Generated reports download to your Downloads folder.");}
-function addReportImages(e){reportImages=[...e.target.files];alert(reportImages.length+" image(s) selected.");}
-async function pasteClipboard(){try{transcript.value+=await navigator.clipboard.readText();}catch(err){alert("Clipboard permission unavailable. Use Load JPEG / PNG Screenshot.");}}
-function startBrowserSnipHelp(){alert("Online mode cannot launch Windows Snip directly. Press Win + Shift + S, snip the image, then click Paste Clipboard Image/Text.");}
-function loadFileName(e){loadedFiles=[...e.target.files];file_name.textContent=loadedFiles.map(f=>f.name).join(", ");}
-function importRequestForm(e){let files=[...e.target.files];measurements.value+="\nImported request form: "+files.map(f=>f.name).join(", ");}
-function extractPatientInfo(){const text=(measurements.value+"\n"+transcript.value).trim();if(!text){alert("Paste/import request text first. Full OCR can be added next.");return;}let name=text.match(/(?:patient|name)\s*[:\-]\s*([A-Za-z ]{3,60})/i);let id=text.match(/\b(\d{13})\b/);if(name)patient_name.value=name[1].trim();if(id)patient_id_file.value=id[1];alert("Basic extraction completed.");}
-function startDictation(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert("Use Chrome/Edge for dictation");return;}recognition=new SR();recognition.continuous=true;recognition.lang="en-ZA";recognition.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)transcript.value+=e.results[i][0].transcript+" ";}};recognition.start();}
-function stopDictation(){if(recognition)recognition.stop();}
-async function changePassword(){let old_password=prompt("Current password:");if(!old_password)return;let new_password=prompt("New password, at least 8 characters:");if(!new_password)return;await api("/api/change-password",{method:"POST",body:JSON.stringify({old_password,new_password})});alert("Password changed");}
-async function createUser(){let username=prompt("New username:");if(!username)return;let password=prompt("Password, at least 8 characters:");if(!password)return;let role=prompt("Role: admin / sonographer / reception");if(!role)return;await api("/api/create-user",{method:"POST",body:JSON.stringify({username,password,role})});alert("User created");showUsers();}
-async function showUsers(){let users=await api("/api/users");admin_users.innerHTML=users.map(u=>`${u.username} - ${u.role}`).join("<br>");}
-function gmailDraftDoctor(){const subject=encodeURIComponent("Ultrasound report");const body=encodeURIComponent("Dear Doctor,\n\nPlease find ultrasound report below:\n\n"+report_body.value);window.open("https://mail.google.com/mail/?view=cm&fs=1&su="+subject+"&body="+body,"_blank");}
-function gmailDraftPatient(){const subject=encodeURIComponent("Ultrasound report");const body=encodeURIComponent("Dear patient,\n\nPlease find your ultrasound report below:\n\n"+report_body.value);window.open("https://mail.google.com/mail/?view=cm&fs=1&su="+subject+"&body="+body,"_blank");}
-function sendWhatsApp(){const msg=encodeURIComponent("Ultrasound report:\n\n"+report_body.value);window.open("https://wa.me/?text="+msg,"_blank");}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
-function wins(){return Array.from(document.querySelectorAll(".win"));}
-function unlockLayout(){layoutUnlocked=true;wins().forEach(w=>w.classList.remove("locked"));layout_hint.textContent="Layout unlocked. Drag title bars and resize bottom-right.";}
-function lockLayout(){layoutUnlocked=false;wins().forEach(w=>w.classList.add("locked"));layout_hint.textContent="Layout locked.";}
-function saveLayout(){let data={};wins().forEach(w=>data[w.id]={left:w.style.left,top:w.style.top,width:w.style.width,height:w.style.height});localStorage.setItem("hendors_v142_layout",JSON.stringify(data));alert("Layout saved on this computer");}
-function loadLayout(){let raw=localStorage.getItem("hendors_v142_layout");if(!raw)return;try{let data=JSON.parse(raw);wins().forEach(w=>{if(data[w.id]){w.style.left=data[w.id].left;w.style.top=data[w.id].top;w.style.width=data[w.id].width;w.style.height=data[w.id].height;}})}catch(e){}}
-function resetLayout(){if(!confirm("Reset layout on this computer?"))return;localStorage.removeItem("hendors_v142_layout");location.reload();}
-document.addEventListener("mousedown",e=>{let t=e.target.closest(".win-title");if(!t||!layoutUnlocked)return;let w=t.parentElement,sx=e.clientX,sy=e.clientY,sl=parseInt(w.style.left||0),st=parseInt(w.style.top||0);w.style.zIndex=Date.now();function mv(ev){w.style.left=(sl+ev.clientX-sx)+"px";w.style.top=(st+ev.clientY-sy)+"px";}function up(){document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);});
-exam_date.value=new Date().toISOString().slice(0,10);
-</script>
-</body>
-</html>
-<!-- END OF ORIGINAL V14.2 -->
-<!-- ================= V16 RECEPTION + BILLING START ================= -->
-
-<div style="position:fixed;bottom:10px;right:10px;background:#0b2238;border:1px solid #8aa0b4;padding:10px;width:300px;z-index:9999">
-  <b>V16 Quick Panel</b>
-
-  <label>Patient</label>
-  <input id="v16_name">
-
-  <label>Study</label>
-  <select id="v16_study">
-    <option>Abdomen ultrasound</option>
-    <option>KUB ultrasound</option>
-    <option>Pelvic ultrasound</option>
-  </select>
-
-  <label>Cash (R)</label>
-  <input id="v16_cash" value="1300">
-
-  <label>Paid (R)</label>
-  <input id="v16_paid" value="0">
-
-  <label>Due (R)</label>
-  <input id="v16_due">
-
-  <button onclick="v16calc()" style="width:100%;background:#17a9dc">Calculate</button>
-  <button onclick="v16save()" style="width:100%;background:#16c18d">Save (local)</button>
+<section class="win" id="v16Win" style="left:1510px;top:5px;width:300px;height:335px"><div class="win-title">V16 Reception + Billing</div><div class="win-body">
+<label>Patient</label><input id="v16_name"><label>Study</label><select id="v16_study"><option>Abdomen ultrasound</option><option>KUB ultrasound</option><option>Pelvic ultrasound</option><option>Breast ultrasound</option><option>Thyroid ultrasound</option><option>Doppler ultrasound</option></select>
+<label>Payment Type</label><select id="v16_payment"><option>Cash</option><option>Medical Aid</option></select><label>Cash (R)</label><input id="v16_cash" value="1300"><label>Paid (R)</label><input id="v16_paid" value="0"><label>Due (R)</label><input id="v16_due">
+<button class="cyan full" onclick="v16calc()">Calculate</button><button class="green full" onclick="v16save()">Save to Cloud</button><button class="blue full" onclick="v16loadCloud()">Load Cloud Queue</button>
+</div><div class="resizer"></div></section>
+<section class="win" id="queueWin" style="left:1510px;top:345px;width:300px;height:280px"><div class="win-title">Cloud Queue</div><div class="win-body"><table><thead><tr><th>Patient</th><th>Study</th><th>Due</th></tr></thead><tbody id="cloudQueue"></tbody></table></div><div class="resizer"></div></section>
 </div>
 
 <script>
-function v16calc(){
-  let cash=Number(document.getElementById('v16_cash').value||0);
-  let paid=Number(document.getElementById('v16_paid').value||0);
-  document.getElementById('v16_due').value=(cash-paid).toFixed(2);
-}
-
-const SUPABASE_URL = "https://acqahzuiozxfuqymgqr.supabase.co";
-const SUPABASE_KEY = "https://acqahzuiozxfuqyqmgqr.supabase.co/rest/v1/";
-
-async function v16save(){
-  let p = {
-    name: document.getElementById('v16_name').value,
-    study: document.getElementById('v16_study').value,
-    cash: Number(document.getElementById('v16_cash').value||0),
-    paid: Number(document.getElementById('v16_paid').value||0),
-    due: Number(document.getElementById('v16_due').value||0),
-    created_at: new Date().toISOString()
-  };
-
-  let res = await fetch(SUPABASE_URL + "/rest/v1/patients", {
-    method: "POST",
-    headers: {
-      "apikey": SUPABASE_KEY,
-      "Authorization": "Bearer " + SUPABASE_KEY,
-      "Content-Type": "application/json",
-      "Prefer": "return=minimal"
-    },
-    body: JSON.stringify(p)
-  });
-
-  if(res.ok){
-    alert("Saved to CLOUD ✅");
-  } else {
-    alert("Error saving ❌");
-  }
-}<script>
-function getVal(id){
-  const el = document.getElementById(id);
-  return el ? el.value : "";
-}
-
-function setVal(id, value){
-  const el = document.getElementById(id);
-  if(el) el.value = value || "";
-}
-
-function saveSettings(){
-  const settings = {
-    apiKey: getVal("apiKey"),
-    textModel: getVal("textModel"),
-    speechModel: getVal("speechModel"),
-    rootFolder: getVal("rootFolder"),
-    prompt: getVal("prompt"),
-    signName: getVal("signName"),
-    signTitle: getVal("signTitle"),
-    signPractice: getVal("signPractice")
-  };
-
-  localStorage.setItem("hendors_settings", JSON.stringify(settings));
-  alert("Settings saved.");
-}
-
-function loadSettings(){
-  const saved = localStorage.getItem("hendors_settings");
-  if(!saved) return;
-
-  const settings = JSON.parse(saved);
-  Object.keys(settings).forEach(id => setVal(id, settings[id]));
-}
-
-function addDoctor(){
-  const doctor = {
-    name: prompt("Doctor name:") || "",
-    email: prompt("Doctor email:") || "",
-    whatsapp: prompt("Doctor WhatsApp:") || ""
-  };
-
-  if(!doctor.name){
-    alert("Doctor not saved. No name entered.");
-    return;
-  }
-
-  const doctors = JSON.parse(localStorage.getItem("hendors_doctors") || "[]");
-  doctors.push(doctor);
-  localStorage.setItem("hendors_doctors", JSON.stringify(doctors));
-  alert("Doctor saved.");
-}
-
-function saveCase(){
-  const patientName = getVal("patient_name") || getVal("patientName") || getVal("patient");
-  const caseData = {
-    patientName: patientName,
-    date: new Date().toISOString(),
-    reportBody: getVal("report_body") || getVal("reportBody"),
-    comment: getVal("comment"),
-    impression: getVal("impression"),
-    transcript: getVal("transcript"),
-    prompt: getVal("prompt")
-  };
-
-  if(!caseData.patientName){
-    alert("Please enter patient name before saving case.");
-    return;
-  }
-
-  const cases = JSON.parse(localStorage.getItem("hendors_cases") || "[]");
-  cases.push(caseData);
-  localStorage.setItem("hendors_cases", JSON.stringify(cases));
-
-  alert("Case saved.");
-}
-
-window.addEventListener("load", loadSettings);
+const STORE_SETTINGS='hendors_v16_settings', STORE_CASES='hendors_v16_cases', STORE_DOCTORS='hendors_v16_doctors', STORE_USERS='hendors_v16_users', STORE_LAYOUT='hendors_v16_layout';
+let selectedCaseIndex=null, selectedDoctorIndex=null, recognition=null, drag=null, resize=null, layoutLocked=true;
+function q(id){return document.getElementById(id)} function msg(t){q('status').innerText=t;setTimeout(()=>q('status').innerText='Ready.',3500)} function h(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))} function get(id){let e=q(id);return e?(e.type==='checkbox'?e.checked:e.value):''} function set(id,v){let e=q(id);if(!e)return;if(e.type==='checkbox')e.checked=!!v;else e.value=v||''}
+function ensureUsers(){if(!localStorage.getItem(STORE_USERS))localStorage.setItem(STORE_USERS,JSON.stringify({admin:{password:'admin123'}}))} function login(){ensureUsers();let u=q('loginUser').value.trim(),p=q('loginPass').value;let users=JSON.parse(localStorage.getItem(STORE_USERS));if(users[u]&&users[u].password===p){q('loginScreen').classList.add('hidden');msg('Logged in.')}else alert('Incorrect username or password.')} function logout(){q('loginPass').value='';q('loginScreen').classList.remove('hidden')} function changePassword(){ensureUsers();let u=prompt('Username','admin');if(!u)return;let old=prompt('Old password');let users=JSON.parse(localStorage.getItem(STORE_USERS));if(!users[u]||users[u].password!==old){alert('Old password incorrect.');return}let np=prompt('New password');if(!np)return;users[u].password=np;localStorage.setItem(STORE_USERS,JSON.stringify(users));alert('Password changed.')} function createUser(){ensureUsers();let u=prompt('New username');if(!u)return;let p=prompt('Password');if(!p)return;let users=JSON.parse(localStorage.getItem(STORE_USERS));users[u]={password:p};localStorage.setItem(STORE_USERS,JSON.stringify(users));alert('User created.')} function showUsers(){ensureUsers();alert(Object.keys(JSON.parse(localStorage.getItem(STORE_USERS))).join('\n'))}
+function saveSettings(){let ids=['apiKey','textModel','speechModel','supabaseUrl','supabaseKey','rootFolder','addSignature','signName','signTitle','signPractice','prompt'];let o={};ids.forEach(id=>o[id]=get(id));localStorage.setItem(STORE_SETTINGS,JSON.stringify(o));alert('Settings saved ✔')} function loadSettings(){let x=localStorage.getItem(STORE_SETTINGS);if(!x)return;let o=JSON.parse(x);Object.keys(o).forEach(k=>set(k,o[k]))}
+function doctors(){return JSON.parse(localStorage.getItem(STORE_DOCTORS)||'[]')} function saveDoctors(a){localStorage.setItem(STORE_DOCTORS,JSON.stringify(a))} function addDoctor(){let name=q('docName').value.trim();if(!name){alert('Enter doctor name.');return}let a=doctors();a.push({name,email:q('docEmail').value.trim(),whatsapp:q('docWhatsapp').value.trim()});saveDoctors(a);q('docName').value=q('docEmail').value=q('docWhatsapp').value='';renderDoctors();alert('Doctor saved ✔')} function renderDoctors(){let a=doctors();q('doctorsTable').innerHTML=a.map((d,i)=>`<tr onclick="selectedDoctorIndex=${i};msg('Doctor selected')"><td>${h(d.name)}</td><td>${h(d.email)}</td><td>${h(d.whatsapp)}</td></tr>`).join('');q('refDoctor').innerHTML='<option></option>'+a.map(d=>`<option>${h(d.name)}</option>`).join('')} function deleteSelectedDoctor(){if(selectedDoctorIndex===null){alert('Select doctor first.');return}let a=doctors();a.splice(selectedDoctorIndex,1);selectedDoctorIndex=null;saveDoctors(a);renderDoctors();alert('Doctor deleted.')}
+function cases(){return JSON.parse(localStorage.getItem(STORE_CASES)||'[]')} function saveCases(a){localStorage.setItem(STORE_CASES,JSON.stringify(a))} function caseData(){return {patient_name:get('patient_name'),patient_id:get('patient_id_file'),exam_date:get('exam_date'),age:get('age'),gender:get('gender'),dob:get('dob'),phone:get('phone'),email:get('email'),physician:get('physician'),operator:get('operator'),study_title:get('study_title'),refDoctor:get('refDoctor'),measurements:get('measurements'),report_body:get('report_body'),comment:get('comment'),impression:get('impression'),transcript:get('transcript'),saved_at:new Date().toISOString()}} function saveCase(){let d=caseData();if(!d.patient_name){alert('Please enter patient name first.');return}let a=cases();a.push(d);saveCases(a);renderCases();alert('Case saved ✔')} function renderCases(){let a=cases();q('casesTable').innerHTML=a.map((c,i)=>`<tr onclick="selectedCaseIndex=${i};msg('Case selected')"><td>${h(c.patient_name)}</td><td>${h((c.exam_date||c.saved_at||'').substring(0,10))}</td></tr>`).join('')} function loadSelectedCase(){if(selectedCaseIndex===null){alert('Select saved case first.');return}let c=cases()[selectedCaseIndex];Object.keys(c).forEach(k=>set(k,c[k]));alert('Case loaded.')} function newPatient(){['patient_name','patient_id_file','age','gender','dob','phone','email','physician','operator','measurements','report_body','comment','impression','transcript'].forEach(id=>set(id,''));set('exam_date',new Date().toISOString().substring(0,10));set('study_title','ULTRASOUND REPORT');msg('New case ready.')}
+function signature(){return get('addSignature')?'\n\n'+get('signName')+'\n'+get('signTitle')+'\n'+get('signPractice')+'\nDate: '+new Date().toLocaleString():''} async function callOpenAI(messages){let key=get('apiKey'),model=get('textModel')||'gpt-4o-mini';if(!key)throw new Error('OpenAI API key missing in Settings.');let r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model,temperature:0.2,messages})});let d=await r.json();if(!r.ok)throw new Error(d.error?.message||'AI failed');return d.choices[0].message.content} async function generateReport(){try{msg('Generating AI report...');let ctx='Patient: '+get('patient_name')+'\nAge/Gender: '+get('age')+' / '+get('gender')+'\nStudy: '+get('study_title')+'\nRef Doctor: '+get('refDoctor')+'\nClinical/Measurements:\n'+get('measurements')+'\nTranscript:\n'+get('transcript');let out=await callOpenAI([{role:'system',content:get('prompt')},{role:'user',content:ctx}]);set('report_body',out.trim()+signature());msg('Report generated.')}catch(e){alert(e.message)}} async function rewriteAI(type){try{let instr=type==='formal'?'Make this report slightly more formal.':'Rewrite this report cleanly.';let out=await callOpenAI([{role:'system',content:get('prompt')},{role:'user',content:instr+'\n\n'+get('report_body')}]);set('report_body',out.trim());}catch(e){alert(e.message)}} function shorten(){set('report_body',get('report_body').replace(/\n{3,}/g,'\n\n'));msg('Shortened.')}
+function printPdf(){let r=get('report_body');if(!r){alert('No report.');return}let w=window.open('','_blank');w.document.write('<pre style="font-family:Arial;white-space:pre-wrap;margin:40px;font-size:13px">'+h(r)+'</pre>');w.document.close();w.print()} function downloadDoc(){let r=get('report_body');if(!r){alert('No report.');return}let b=new Blob(['<html><body><pre style="font-family:Arial;white-space:pre-wrap">'+h(r)+'</pre></body></html>'],{type:'application/msword'});let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(get('patient_name')||'report').replace(/[^a-z0-9]/gi,'_')+'_report.doc';a.click()} function generateDocxPdf(){downloadDoc();setTimeout(printPdf,400)} function selectedDoctor(){return doctors().find(d=>d.name===get('refDoctor'))||{}} function emailDoctor(){let d=selectedDoctor();let body=encodeURIComponent(get('report_body'));window.open('mailto:'+(d.email||'')+'?subject='+encodeURIComponent('Ultrasound report - '+get('patient_name'))+'&body='+body)} function emailPatient(){let body=encodeURIComponent('Good day,\n\nPlease find your ultrasound report below.\n\n'+get('report_body'));window.open('mailto:'+get('email')+'?subject='+encodeURIComponent('Ultrasound report')+'&body='+body)} function sendWhatsApp(){let d=selectedDoctor();let phone=(d.whatsapp||get('phone')||'').replace(/[^0-9]/g,'');if(phone.startsWith('0'))phone='27'+phone.substring(1);window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Good day. Report for '+get('patient_name')+' is ready.'))}
+async function pasteClipboard(){try{let t=await navigator.clipboard.readText();set('measurements',get('measurements')+'\n'+t)}catch(e){alert('Use Ctrl+V inside the text box.')}} function startDictation(){let R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){alert('Browser dictation not supported. Use Chrome/Edge or paste from ChatGPT voice.');return}recognition=new R();recognition.continuous=true;recognition.interimResults=false;recognition.lang='en-ZA';recognition.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)set('transcript',get('transcript')+e.results[i][0].transcript+' ')};recognition.start()} function stopDictation(){if(recognition)recognition.stop()}
+function v16calc(){let cash=Number(get('v16_cash')||0),paid=Number(get('v16_paid')||0);set('v16_due',(cash-paid).toFixed(2))} async function v16save(){v16calc();let url=get('supabaseUrl'),key=get('supabaseKey');let p={name:get('v16_name'),study:get('v16_study'),payment_type:get('v16_payment'),cash:Number(get('v16_cash')||0),paid:Number(get('v16_paid')||0),due:Number(get('v16_due')||0),created_at:new Date().toISOString()};if(!p.name){alert('Enter patient name.');return}if(!url||!key){alert('Add Supabase URL and publishable key in Settings, or this will save local only.');let a=cases();a.push({patient_name:p.name,study_title:p.study,saved_at:p.created_at});saveCases(a);renderCases();return}let r=await fetch(url+'/rest/v1/patients',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(p)});if(r.ok)alert('Saved to CLOUD ✔');else alert('Cloud save failed. Check table/policies/key.')} async function v16loadCloud(){let url=get('supabaseUrl'),key=get('supabaseKey');if(!url||!key){alert('Add Supabase settings first.');return}let r=await fetch(url+'/rest/v1/patients?select=*&order=created_at.desc',{headers:{apikey:key,Authorization:'Bearer '+key}});let d=await r.json();if(!r.ok){alert('Cloud load failed.');return}q('cloudQueue').innerHTML=d.map(p=>'<tr><td>'+h(p.name)+'</td><td>'+h(p.study)+'</td><td>R '+Number(p.due||0).toFixed(2)+'</td></tr>').join('')}
+function unlockLayout(){layoutLocked=false;document.body.classList.remove('locked');msg('Layout unlocked. Drag title bars and resize bottom-right.')} function lockLayout(){layoutLocked=true;document.body.classList.add('locked');msg('Layout locked.')} function saveLayout(){let o={};document.querySelectorAll('.win').forEach(w=>o[w.id]={left:w.style.left,top:w.style.top,width:w.style.width,height:w.style.height});localStorage.setItem(STORE_LAYOUT,JSON.stringify(o));alert('Layout saved ✔')} function loadLayout(){let x=localStorage.getItem(STORE_LAYOUT);if(!x)return;let o=JSON.parse(x);Object.keys(o).forEach(id=>{let w=q(id);if(w)Object.assign(w.style,o[id])})} function resetLayout(){localStorage.removeItem(STORE_LAYOUT);location.reload()}
+document.addEventListener('mousedown',e=>{if(layoutLocked)return;if(e.target.classList.contains('win-title')){let p=e.target.parentElement;drag={p,dx:e.clientX-p.offsetLeft,dy:e.clientY-p.offsetTop};e.preventDefault()}if(e.target.classList.contains('resizer')){let p=e.target.parentElement;resize={p,x:e.clientX,y:e.clientY,w:p.offsetWidth,h:p.offsetHeight};e.preventDefault()}});document.addEventListener('mousemove',e=>{if(drag){drag.p.style.left=e.clientX-drag.dx+'px';drag.p.style.top=e.clientY-drag.dy+'px'}if(resize){resize.p.style.width=Math.max(220,resize.w+e.clientX-resize.x)+'px';resize.p.style.height=Math.max(110,resize.h+e.clientY-resize.y)+'px'}});document.addEventListener('mouseup',()=>{drag=null;resize=null});window.onload=()=>{ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',new Date().toISOString().substring(0,10));}
 </script>
-</script>
+</body>
+</html>
 
-<!-- ================= V16 RECEPTION + BILLING END ================= -->
