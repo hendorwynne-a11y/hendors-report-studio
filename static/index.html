@@ -159,8 +159,8 @@ function getSupabase(){
   const key = document.getElementById('supabaseKey')?.value;
 
   if(!url || !key){
-    alert("Add Supabase URL + Key in Settings first");
-    return null;
+  return null;
+}
   }
 
   if(!supabaseClient){
@@ -171,22 +171,33 @@ function getSupabase(){
 }
 
 async function login(){
-  const email = document.getElementById('loginUser').value;
+  const username = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value;
 
   const sb = getSupabase();
-  if(!sb) return;
+
+  // temporary local admin login so you can enter Settings
+  if(!sb){
+    if(username === "admin" && password === "admin123"){
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('status').innerText = "Logged in locally. Add Supabase settings.";
+      return;
+    }
+
+    alert("Use admin / admin123 first, then add Supabase settings.");
+    return;
+  }
 
   const { error } = await sb.auth.signInWithPassword({
-    email,
-    password
+    email: username,
+    password: password
   });
 
   if(error){
     alert("Login failed: " + error.message);
   } else {
     document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('status').innerText = "Logged in: " + email;
+    document.getElementById('status').innerText = "Logged in: " + username;
   }
 }
 
