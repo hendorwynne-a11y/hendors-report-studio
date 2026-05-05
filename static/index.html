@@ -40,7 +40,7 @@ tr:hover{background:#12385b;cursor:pointer}
     <h2>Hendors Report Studio V16</h2>
     <label>Username</label><input id="loginUser" value="admin">
     <label>Password</label><input id="loginPass" type="password" placeholder="admin123">
-    <button class="green full" onclick="login()">Login</button>
+    <button class="green" onclick="login()">Login</button>
     <button class="blue full" onclick="changePassword()">Change Password</button>
     <p class="small">Default: admin / admin123</p>
   </div>
@@ -215,6 +215,25 @@ async function logout(){
   document.getElementById('loginScreen').classList.remove('hidden');
 }
 </script>
-</body>
+<script>
+function login(){
+  const username = document.querySelector('input[type="text"]').value.trim();
+  const password = document.querySelector('input[type="password"]').value;
+
+  if(username === "admin" && password === "admin123"){
+    const loginBox = document.querySelector('.login');
+    if(loginBox){
+      loginBox.style.display = "none";
+    }
+
+    // unlock main UI
+    document.body.style.overflow = "auto";
+
+    alert("Login successful");
+  } else {
+    alert("Wrong username or password");
+  }
+}
+</script></body>
 </html>
 
