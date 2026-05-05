@@ -170,11 +170,18 @@ function getSupabase(){
   return supabaseClient;
 }
 
-async function login(){
+function login(){
   const username = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value;
 
-  const sb = getSupabase();
+  if(username === "admin" && password === "admin123"){
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('status').innerText = "Logged in locally.";
+    return;
+  }
+
+  alert("Use admin / admin123 for now.");
+}
 
   // temporary local admin login so you can enter Settings
   if(!sb){
