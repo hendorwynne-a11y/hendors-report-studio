@@ -32,6 +32,7 @@ tr:hover{background:#12385b;cursor:pointer}
 .login{position:fixed;inset:0;background:#061523;z-index:9999;display:flex;align-items:center;justify-content:center}
 .login-card{width:410px;background:#0b2135;border:1px solid var(--line);padding:24px}.hidden{display:none!important}
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="locked">
 <div id="loginScreen" class="login">
@@ -150,6 +151,51 @@ async function pasteClipboard(){try{let t=await navigator.clipboard.readText();s
 function v16calc(){let cash=Number(get('v16_cash')||0),paid=Number(get('v16_paid')||0);set('v16_due',(cash-paid).toFixed(2))} async function v16save(){v16calc();let url=get('supabaseUrl'),key=get('supabaseKey');let p={name:get('v16_name'),study:get('v16_study'),payment_type:get('v16_payment'),cash:Number(get('v16_cash')||0),paid:Number(get('v16_paid')||0),due:Number(get('v16_due')||0),created_at:new Date().toISOString()};if(!p.name){alert('Enter patient name.');return}if(!url||!key){alert('Add Supabase URL and publishable key in Settings, or this will save local only.');let a=cases();a.push({patient_name:p.name,study_title:p.study,saved_at:p.created_at});saveCases(a);renderCases();return}let r=await fetch(url+'/rest/v1/patients',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(p)});if(r.ok)alert('Saved to CLOUD ✔');else alert('Cloud save failed. Check table/policies/key.')} async function v16loadCloud(){let url=get('supabaseUrl'),key=get('supabaseKey');if(!url||!key){alert('Add Supabase settings first.');return}let r=await fetch(url+'/rest/v1/patients?select=*&order=created_at.desc',{headers:{apikey:key,Authorization:'Bearer '+key}});let d=await r.json();if(!r.ok){alert('Cloud load failed.');return}q('cloudQueue').innerHTML=d.map(p=>'<tr><td>'+h(p.name)+'</td><td>'+h(p.study)+'</td><td>R '+Number(p.due||0).toFixed(2)+'</td></tr>').join('')}
 function unlockLayout(){layoutLocked=false;document.body.classList.remove('locked');msg('Layout unlocked. Drag title bars and resize bottom-right.')} function lockLayout(){layoutLocked=true;document.body.classList.add('locked');msg('Layout locked.')} function saveLayout(){let o={};document.querySelectorAll('.win').forEach(w=>o[w.id]={left:w.style.left,top:w.style.top,width:w.style.width,height:w.style.height});localStorage.setItem(STORE_LAYOUT,JSON.stringify(o));alert('Layout saved ✔')} function loadLayout(){let x=localStorage.getItem(STORE_LAYOUT);if(!x)return;let o=JSON.parse(x);Object.keys(o).forEach(id=>{let w=q(id);if(w)Object.assign(w.style,o[id])})} function resetLayout(){localStorage.removeItem(STORE_LAYOUT);location.reload()}
 document.addEventListener('mousedown',e=>{if(layoutLocked)return;if(e.target.classList.contains('win-title')){let p=e.target.parentElement;drag={p,dx:e.clientX-p.offsetLeft,dy:e.clientY-p.offsetTop};e.preventDefault()}if(e.target.classList.contains('resizer')){let p=e.target.parentElement;resize={p,x:e.clientX,y:e.clientY,w:p.offsetWidth,h:p.offsetHeight};e.preventDefault()}});document.addEventListener('mousemove',e=>{if(drag){drag.p.style.left=e.clientX-drag.dx+'px';drag.p.style.top=e.clientY-drag.dy+'px'}if(resize){resize.p.style.width=Math.max(220,resize.w+e.clientX-resize.x)+'px';resize.p.style.height=Math.max(110,resize.h+e.clientY-resize.y)+'px'}});document.addEventListener('mouseup',()=>{drag=null;resize=null});window.onload=()=>{ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',new Date().toISOString().substring(0,10));}
+// ===== SUPABASE LOGIN =====
+let supabaseClient = null;
+
+function getSupabase(){
+  const url = document.getElementById('supabaseUrl')?.value;
+  const key = document.getElementById('supabaseKey')?.value;
+
+  if(!url || !key){
+    alert("Add Supabase URL + Key in Settings first");
+    return null;
+  }
+
+  if(!supabaseClient){
+    supabaseClient = supabase.createClient(url, key);
+  }
+
+  return supabaseClient;
+}
+
+async function login(){
+  const email = document.getElementById('loginUser').value;
+  const password = document.getElementById('loginPass').value;
+
+  const sb = getSupabase();
+  if(!sb) return;
+
+  const { error } = await sb.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error){
+    alert("Login failed: " + error.message);
+  } else {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('status').innerText = "Logged in: " + email;
+  }
+}
+
+async function logout(){
+  const sb = getSupabase();
+  if(sb) await sb.auth.signOut();
+
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
 </script>
 </body>
 </html>
