@@ -288,7 +288,26 @@ async function saveCase(){
 
   if(url&&key){
     try{
-      const r=await fetch(url+'/rest/v1/patients',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(data)});
+      const r=await fetch(url+'/rest/v1/patients',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({
+  patient_name: data.patient_name,
+  patient_id_file: data.patient_id_file,
+  exam_date: data.exam_date,
+  dob: data.dob,
+  age: data.age,
+  gender: data.gender,
+  phone: data.phone,
+  email: data.email,
+  physician: data.physician,
+  operator: data.operator,
+  study_title: data.study_title,
+  referring_doctor: data.referring_doctor,
+  measurements: data.measurements,
+  transcript: data.transcript,
+  report_body: data.report_body,
+  comment: data.comment,
+  impression: data.impression,
+  report_status: 'waiting'
+})});
       if(r.ok){alert('Case saved to CLOUD ✔');await loadCloudCases();return}
       console.error(await r.text());
       alert('Cloud save failed. Saving locally instead.');
