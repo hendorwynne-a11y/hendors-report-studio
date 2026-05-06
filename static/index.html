@@ -49,7 +49,29 @@ body{
 
 <section class="win" id="caseWin" style="left:360px;top:5px;width:720px;height:92%"><div class="win-title">Case Entry</div><div class="win-body">
 <div class="grid3"><div><label>Patient Name</label><input id="patient_name"></div><div><label>Patient ID / File No</label><input id="patient_id_file"></div><div><label>Exam Date</label><input id="exam_date" type="date"></div><div><label>Age</label><input id="age"></div><div><label>Gender</label><input id="gender"></div><div><label>Date of Birth</label><input id="dob"></div><div><label>Phone</label><input id="phone"></div><div><label>Email</label><input id="email"></div><div><label>Perf. Physician</label><input id="physician"></div><div><label>Operator</label><input id="operator"></div><div><label>Study Title</label><input id="study_title" value="ULTRASOUND REPORT"></div><div><label>Referring Doctor</label><select id="refDoctor"></select></div></div>
-<div class="grid3" style="margin-top:8px"><button class="green" onclick="newPatient()">NEW PATIENT</button><button class="blue" onclick="saveCase()">SAVE CASE</button><button class="cyan" onclick="loadSelectedCase()">LOAD SELECTED</button></div>
+<div class="grid3" style="margin-top:8px"><button class="green" onclick="newPatient()">NEW PATIENT</button><button class="blue" onclick="function saveCase(){
+  try{
+    let d = caseData();
+
+    if(!d.patient_name){
+      alert('Enter patient name');
+      return;
+    }
+
+    let a = cases();
+    a.push(d);
+
+    localStorage.setItem(STORE_CASES, JSON.stringify(a));
+
+    renderCases();
+
+    alert('Case saved successfully');
+
+  }catch(e){
+    console.error(e);
+    alert('Error saving case');
+  }
+}
 <label>Measurements / Imported Text</label><textarea id="measurements" style="height:120px"></textarea><label>Report Body</label><textarea id="report_body" style="height:300px"></textarea><div class="grid2"><div><label>Comment</label><textarea id="comment" style="height:105px"></textarea></div><div><label>Impression (one line per bullet)</label><textarea id="impression" style="height:105px"></textarea></div></div>
 </div><div class="resizer"></div></section>
 
