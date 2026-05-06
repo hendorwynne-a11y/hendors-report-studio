@@ -97,10 +97,10 @@ tr:hover{background:#12385b;cursor:pointer}.full{width:100%;margin-top:4px}.smal
 <div class="grid3">
 <div><label>Patient Name</label><input id="patient_name"></div>
 <div><label>Patient ID / File No</label><input id="patient_id_file"></div>
-<div><label>Exam Date</label><input id="exam_date" type="date"></div>
+<div><label>Exam Date</label><input id="exam_date" type="text" placeholder="dd/mm/yyyy"></div>
 <div><label>Age</label><input id="age"></div>
 <div><label>Gender</label><select id="gender"><option value=""></option><option value="Male">Male</option><option value="Female">Female</option></select></div>
-<div><label>Date of Birth</label><input id="dob" type="date"></div>
+<div><label>Date of Birth</label><input id="dob" type="text" placeholder="dd/mm/yyyy"></div>
 <div><label>Phone</label><input id="phone"></div>
 <div><label>Email</label><input id="email"></div>
 <div><label>Perf. Physician</label><input id="physician"></div>
@@ -216,7 +216,7 @@ Use bullet points.</textarea>
 <div class="win-title">Doctor Batch / Date Box</div>
 <div class="win-body">
 <label>Doctor</label><select id="batchDoctor"></select>
-<label>Date</label><input id="batchDate" type="date">
+<label>Date</label><input id="batchDate" type="text" placeholder="dd/mm/yyyy">
 <div class="grid2" style="margin-top:8px">
 <button class="cyan" onclick="loadDoctorBatch()">Load Batch</button>
 <button class="orange" onclick="clearBatch()">Clear</button>
@@ -244,6 +244,19 @@ const STORE_DOCTORS='hendors_v163_doctors';
 const STORE_USERS='hendors_v163_users';
 const STORE_LAYOUT='hendors_v163_layout';
 let selectedCaseIndex=null,selectedDoctorIndex=null,recognition=null,dragObj=null,resizeObj=null,layoutUnlocked=false,cloudRows=[],batchRows=[];
+
+function pad2(n){return String(n).padStart(2,'0')}
+function todayDMY(){const d=new Date();return pad2(d.getDate())+'/'+pad2(d.getMonth()+1)+'/'+d.getFullYear()}
+function sameDMY(a,b){
+  if(!a||!b)return false;
+  a=String(a).substring(0,10);
+  b=String(b).substring(0,10);
+  if(a.includes('-')){
+    const p=a.split('-');
+    a=p[2]+'/'+p[1]+'/'+p[0];
+  }
+  return a===b;
+}
 
 function q(id){return document.getElementById(id)}
 function get(id){const e=q(id);return e?(e.type==='checkbox'?e.checked:e.value):''}
@@ -306,7 +319,7 @@ function loadCloudRecord(c){
 }
 
 function loadSelectedCase(){if(selectedCaseIndex===null){alert('Select saved local case first.');return}const data=cases()[selectedCaseIndex];Object.keys(data).forEach(function(key){set(key,data[key])});if(data.referring_doctor)set('refDoctor',data.referring_doctor);alert('Case loaded.')}
-function newPatient(){['patient_name','patient_id_file','age','gender','dob','phone','email','physician','operator','measurements','report_body','comment','impression','transcript'].forEach(function(id){set(id,'')});set('exam_date',new Date().toISOString().substring(0,10));set('study_title','ULTRASOUND REPORT');msg('New case ready.')}
+function newPatient(){['patient_name','patient_id_file','age','gender','dob','phone','email','physician','operator','measurements','report_body','comment','impression','transcript'].forEach(function(id){set(id,'')});set('exam_date',todayDMY());set('study_title','ULTRASOUND REPORT');msg('New case ready.')}
 
 function signature(){if(!get('addSignature'))return '';return '\n\n'+get('signName')+'\n'+get('signTitle')+'\n'+get('signPractice')+'\nDate: '+new Date().toLocaleString()}
 function generateReport(){const body=get('report_body'),measurements=get('measurements'),transcript=get('transcript');if(!measurements&&!transcript&&!body){alert('Add transcript or measurements first.');return}const simpleReport='ULTRASOUND REPORT\n\nPatient: '+get('patient_name')+'\nPatient ID / File No: '+get('patient_id_file')+'\nAge / Gender: '+get('age')+' / '+get('gender')+'\nDOB: '+get('dob')+'\nExam Date: '+get('exam_date')+'\nReferring Doctor: '+get('refDoctor')+'\n\nFindings\n'+(measurements||transcript||body)+'\n\nComment\n'+(get('comment')||'[Comment here.]')+'\n\nImpression\n'+(get('impression')||'• Findings as described above.')+signature();set('report_body',simpleReport);msg('Report generated locally.')}
@@ -325,7 +338,7 @@ function pasteClipboard(){navigator.clipboard.readText().then(function(text){set
 function startDictation(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){alert('Browser dictation not supported. Use Chrome/Edge.');return}recognition=new R();recognition.continuous=true;recognition.interimResults=false;recognition.lang='en-ZA';recognition.onresult=function(e){for(let i=e.resultIndex;i<e.results.length;i++){set('transcript',get('transcript')+e.results[i][0].transcript+' ')}};recognition.start()}
 function stopDictation(){if(recognition)recognition.stop()}
 function v16calc(){const cash=Number(get('v16_cash')||0),paid=Number(get('v16_paid')||0);set('v16_due',(cash-paid).toFixed(2))}
-async function v16save(){v16calc();const name=get('v16_name');if(!name){alert('Enter patient name.');return}set('patient_name',name);set('study_title',get('v16_study'));set('measurements','Reception / Billing\nPayment type: '+get('v16_payment')+'\nCash: R'+get('v16_cash')+'\nPaid: R'+get('v16_paid')+'\nDue: R'+get('v16_due'));set('exam_date',new Date().toISOString().substring(0,10));await saveCase()}
+async function v16save(){v16calc();const name=get('v16_name');if(!name){alert('Enter patient name.');return}set('patient_name',name);set('study_title',get('v16_study'));set('measurements','Reception / Billing\nPayment type: '+get('v16_payment')+'\nCash: R'+get('v16_cash')+'\nPaid: R'+get('v16_paid')+'\nDue: R'+get('v16_due'));set('exam_date',todayDMY());await saveCase()}
 async function v16loadCloud(){await loadCloudCases();const table=q('cloudQueue');table.innerHTML='';cloudRows.forEach(function(c){const dueMatch=String(c.measurements||'').match(/Due:\s*R?([0-9.]+)/i);const due=dueMatch?dueMatch[1]:'';const tr=document.createElement('tr');tr.innerHTML='<td>'+esc(c.patient_name||'')+'</td><td>'+esc(c.study_title||'')+'</td><td>'+esc(due?'R '+due:'')+'</td>';tr.onclick=function(){loadCloudRecord(c)};table.appendChild(tr)})}
 
 
@@ -342,7 +355,7 @@ async function loadDoctorBatch(){
   if(!doctor){alert('Select doctor first.');return}
   if(!date){alert('Select date first.');return}
   const all=await getAllAvailableRows();
-  batchRows=all.filter(function(c){return String(c.referring_doctor||c.refDoctor||'')===doctor && String(c.exam_date||c.created_at||'').substring(0,10)===date});
+  batchRows=all.filter(function(c){return String(c.referring_doctor||c.refDoctor||'')===doctor && sameDMY(c.exam_date||c.created_at||'',date)});
   const table=q('batchTable');table.innerHTML='';
   batchRows.forEach(function(c,i){const tr=document.createElement('tr');tr.innerHTML='<td><input type="checkbox" class="batchCheck" data-index="'+i+'" checked style="width:auto"></td><td>'+esc(c.patient_name||'')+'</td><td>'+esc((c.exam_date||c.created_at||'').substring(0,10))+'</td>';table.appendChild(tr)});
   msg(batchRows.length+' batch patients loaded.');
@@ -368,7 +381,7 @@ function resetLayout(){localStorage.removeItem(STORE_LAYOUT);location.reload()}
 document.addEventListener('mousedown',function(e){if(!layoutUnlocked)return;if(e.target.classList.contains('win-title')){const panel=e.target.parentElement;dragObj={panel:panel,dx:e.clientX-panel.offsetLeft,dy:e.clientY-panel.offsetTop};e.preventDefault()}if(e.target.classList.contains('resizer')){const panel=e.target.parentElement;resizeObj={panel:panel,x:e.clientX,y:e.clientY,w:panel.offsetWidth,h:panel.offsetHeight};e.preventDefault()}})
 document.addEventListener('mousemove',function(e){if(dragObj){dragObj.panel.style.left=(e.clientX-dragObj.dx)+'px';dragObj.panel.style.top=(e.clientY-dragObj.dy)+'px'}if(resizeObj){resizeObj.panel.style.width=Math.max(230,resizeObj.w+e.clientX-resizeObj.x)+'px';resizeObj.panel.style.height=Math.max(110,resizeObj.h+e.clientY-resizeObj.y)+'px'}})
 document.addEventListener('mouseup',function(){dragObj=null;resizeObj=null})
-window.onload=function(){ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',new Date().toISOString().substring(0,10));if(q('batchDate')&&!get('batchDate'))set('batchDate',new Date().toISOString().substring(0,10));lockLayout()}
+window.onload=function(){ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',todayDMY());if(q('batchDate')&&!get('batchDate'))set('batchDate',todayDMY());lockLayout()}
 </script>
 </body>
 </html>
