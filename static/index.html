@@ -99,7 +99,37 @@ let selectedCaseIndex=null, selectedDoctorIndex=null, recognition=null, drag=nul
 function q(id){return document.getElementById(id)} function msg(t){q('status').innerText=t;setTimeout(()=>q('status').innerText='Ready.',3500)} function h(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))} function get(id){let e=q(id);return e?(e.type==='checkbox'?e.checked:e.value):''} function set(id,v){let e=q(id);if(!e)return;if(e.type==='checkbox')e.checked=!!v;else e.value=v||''}
 function login(){const u=get('loginUser').trim(),p=get('loginPass');if(u==='admin'&&p==='admin123'){q('loginScreen').classList.add('hidden');msg('Logged in.');return}alert('Wrong login. Use admin / admin123')}
 function logout(){q('loginScreen').classList.remove('hidden');set('loginPass','admin123')}
-function saveSettings(){const ids=['apiKey','textModel','speechModel','supabaseUrl','supabaseKey','rootFolder','addSignature','signName','signTitle','signPractice','prompt'];let o={};ids.forEach(id=>o[id]=get(id));localStorage.setItem(STORE_SETTINGS,JSON.stringify(o));alert('Settings saved ✔')}
+function saveSettings(){
+  const ids = [
+    'apiKey',
+    'textModel',
+    'speechModel',
+    'supabaseUrl',
+    'supabaseKey',
+    'rootFolder',
+    'addSignature',
+    'signName',
+    'signTitle',
+    'signPractice',
+    'prompt'
+  ];
+
+  let settings = {};
+
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+
+    if(el.type === 'checkbox'){
+      settings[id] = el.checked;
+    } else {
+      settings[id] = el.value;
+    }
+  });
+
+  localStorage.setItem('hendors_v16_settings', JSON.stringify(settings));
+  alert('Settings saved ✔');
+}
 function loadSettings(){let x=localStorage.getItem(STORE_SETTINGS);if(!x)return;let o=JSON.parse(x);Object.keys(o).forEach(k=>set(k,o[k]))}
 function doctors(){return JSON.parse(localStorage.getItem(STORE_DOCTORS)||'[]')} function saveDoctors(a){localStorage.setItem(STORE_DOCTORS,JSON.stringify(a))}
 function addDoctor(){let name=get('docName').trim();if(!name){alert('Enter doctor name.');return}let a=doctors();a.push({name:name,email:get('docEmail').trim(),whatsapp:get('docWhatsapp').trim()});saveDoctors(a);set('docName','');set('docEmail','');set('docWhatsapp','');renderDoctors();alert('Doctor saved ✔')}
