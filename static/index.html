@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hendors Report Studio V16.2 Cloud Queue</title>
+<title>Hendors Report Studio V16.3 Doctor Batch</title>
 <style>
 :root{--bg:#061523;--panel:#0b2135;--line:#9aa9bb;--field:#071726;--green:#18bf8f;--blue:#2563eb;--cyan:#19a7df;--purple:#7c3aed;--orange:#f59e0b;--red:#e11d48}
 *{box-sizing:border-box}
@@ -34,7 +34,7 @@ tr:hover{background:#12385b;cursor:pointer}.full{width:100%;margin-top:4px}.smal
 <body>
 <div id="loginScreen" class="login">
   <div class="login-card">
-    <h2>Hendors Report Studio V16.2</h2>
+    <h2>Hendors Report Studio V16.3</h2>
     <label>Username</label><input id="loginUser" value="admin">
     <label>Password</label><input id="loginPass" type="password" placeholder="admin123">
     <button class="green full" onclick="login()">Login</button>
@@ -42,7 +42,7 @@ tr:hover{background:#12385b;cursor:pointer}.full{width:100%;margin-top:4px}.smal
   </div>
 </div>
 
-<div class="title">🪶 Hendors Report Studio V16.2 — Cloud Queue</div>
+<div class="title">🪶 Hendors Report Studio V16.3 — Doctor Batch</div>
 <div class="toolbar">
   <button class="orange" onclick="unlockLayout()">Unlock Layout</button>
   <button class="green" onclick="lockLayout()">Lock Layout</button>
@@ -99,8 +99,8 @@ tr:hover{background:#12385b;cursor:pointer}.full{width:100%;margin-top:4px}.smal
 <div><label>Patient ID / File No</label><input id="patient_id_file"></div>
 <div><label>Exam Date</label><input id="exam_date" type="date"></div>
 <div><label>Age</label><input id="age"></div>
-<div><label>Gender</label><input id="gender"></div>
-<div><label>Date of Birth</label><input id="dob"></div>
+<div><label>Gender</label><select id="gender"><option value=""></option><option value="Male">Male</option><option value="Female">Female</option></select></div>
+<div><label>Date of Birth</label><input id="dob" type="date"></div>
 <div><label>Phone</label><input id="phone"></div>
 <div><label>Email</label><input id="email"></div>
 <div><label>Perf. Physician</label><input id="physician"></div>
@@ -211,15 +211,39 @@ Use bullet points.</textarea>
 <div class="win-title">Cloud Queue</div>
 <div class="win-body"><table><thead><tr><th>Patient</th><th>Study</th><th>Due</th></tr></thead><tbody id="cloudQueue"></tbody></table></div><div class="resizer"></div>
 </section>
+
+<section class="win" id="batchWin" style="left:1980px;top:5px;width:390px;height:570px">
+<div class="win-title">Doctor Batch / Date Box</div>
+<div class="win-body">
+<label>Doctor</label><select id="batchDoctor"></select>
+<label>Date</label><input id="batchDate" type="date">
+<div class="grid2" style="margin-top:8px">
+<button class="cyan" onclick="loadDoctorBatch()">Load Batch</button>
+<button class="orange" onclick="clearBatch()">Clear</button>
+</div>
+<table style="margin-top:8px"><thead><tr><th>Use</th><th>Patient</th><th>Date</th></tr></thead><tbody id="batchTable"></tbody></table>
+<label>Batch Message</label>
+<textarea id="batchMessage" style="height:95px">Good day Doctor,
+
+Please find attached the ultrasound reports for your patients seen today.
+
+Kind regards
+Hendor L. Wynne</textarea>
+<button class="blue full" onclick="printBatchReports()">Print / Save Combined Batch</button>
+<button class="green full" onclick="emailBatchDoctor()">Create Gmail Batch Draft</button>
+<button class="green full" onclick="whatsappBatchDoctor()">Send Batch WhatsApp</button>
+<p class="small">Browser version creates one combined printable batch. ZIP/PDF folder packaging can be added later with backend support.</p>
+</div><div class="resizer"></div>
+</section>
 </div>
 
 <script>
-const STORE_SETTINGS='hendors_v162_settings';
-const STORE_CASES='hendors_v162_local_cases';
-const STORE_DOCTORS='hendors_v162_doctors';
-const STORE_USERS='hendors_v162_users';
-const STORE_LAYOUT='hendors_v162_layout';
-let selectedCaseIndex=null,selectedDoctorIndex=null,recognition=null,dragObj=null,resizeObj=null,layoutUnlocked=false,cloudRows=[];
+const STORE_SETTINGS='hendors_v163_settings';
+const STORE_CASES='hendors_v163_local_cases';
+const STORE_DOCTORS='hendors_v163_doctors';
+const STORE_USERS='hendors_v163_users';
+const STORE_LAYOUT='hendors_v163_layout';
+let selectedCaseIndex=null,selectedDoctorIndex=null,recognition=null,dragObj=null,resizeObj=null,layoutUnlocked=false,cloudRows=[],batchRows=[];
 
 function q(id){return document.getElementById(id)}
 function get(id){const e=q(id);return e?(e.type==='checkbox'?e.checked:e.value):''}
@@ -231,13 +255,13 @@ function ensureUsers(){if(!localStorage.getItem(STORE_USERS)){localStorage.setIt
 function login(){ensureUsers();const username=get('loginUser').trim();const password=get('loginPass').trim();const users=JSON.parse(localStorage.getItem(STORE_USERS)||'{}');if(users[username]&&users[username].password===password){q('loginScreen').classList.add('hidden');msg('Logged in.');return}alert('Incorrect username/password. Use admin / admin123')}
 function logout(){set('loginPass','');q('loginScreen').classList.remove('hidden')}
 
-function saveSettings(){const ids=['apiKey','textModel','speechModel','supabaseUrl','supabaseKey','rootFolder','addSignature','signName','signTitle','signPractice','prompt'];const settings={};ids.forEach(function(id){settings[id]=get(id)});localStorage.setItem(STORE_SETTINGS,JSON.stringify(settings));alert('Settings saved ✔')}
+function saveSettings(){const ids=['apiKey','textModel','speechModel','supabaseUrl','supabaseKey','rootFolder','addSignature','signName','signTitle','signPractice','prompt','batchMessage'];const settings={};ids.forEach(function(id){settings[id]=get(id)});localStorage.setItem(STORE_SETTINGS,JSON.stringify(settings));alert('Settings saved ✔')}
 function loadSettings(){const saved=localStorage.getItem(STORE_SETTINGS);if(!saved)return;const settings=JSON.parse(saved);Object.keys(settings).forEach(function(id){set(id,settings[id])})}
 
 function doctors(){return JSON.parse(localStorage.getItem(STORE_DOCTORS)||'[]')}
 function saveDoctors(list){localStorage.setItem(STORE_DOCTORS,JSON.stringify(list))}
 function addDoctor(){const name=get('docName').trim();if(!name){alert('Enter doctor name.');return}const list=doctors();list.push({name:name,email:get('docEmail').trim(),whatsapp:get('docWhatsapp').trim()});saveDoctors(list);set('docName','');set('docEmail','');set('docWhatsapp','');renderDoctors();alert('Doctor saved ✔')}
-function renderDoctors(){const list=doctors();const table=q('doctorsTable');table.innerHTML='';q('refDoctor').innerHTML='<option></option>';list.forEach(function(doc,index){const tr=document.createElement('tr');tr.innerHTML='<td>'+esc(doc.name)+'</td><td>'+esc(doc.email)+'</td><td>'+esc(doc.whatsapp)+'</td>';tr.onclick=function(){selectedDoctorIndex=index;msg('Doctor selected.')};table.appendChild(tr);const opt=document.createElement('option');opt.textContent=doc.name;q('refDoctor').appendChild(opt)})}
+function renderDoctors(){const list=doctors();const table=q('doctorsTable');table.innerHTML='';q('refDoctor').innerHTML='<option></option>';if(q('batchDoctor'))q('batchDoctor').innerHTML='<option></option>';list.forEach(function(doc,index){const tr=document.createElement('tr');tr.innerHTML='<td>'+esc(doc.name)+'</td><td>'+esc(doc.email)+'</td><td>'+esc(doc.whatsapp)+'</td>';tr.onclick=function(){selectedDoctorIndex=index;msg('Doctor selected.')};table.appendChild(tr);const opt=document.createElement('option');opt.textContent=doc.name;q('refDoctor').appendChild(opt);if(q('batchDoctor')){const opt2=document.createElement('option');opt2.textContent=doc.name;q('batchDoctor').appendChild(opt2)}})}
 function deleteSelectedDoctor(){if(selectedDoctorIndex===null){alert('Select doctor first.');return}const list=doctors();list.splice(selectedDoctorIndex,1);selectedDoctorIndex=null;saveDoctors(list);renderDoctors();alert('Doctor deleted.')}
 
 function cases(){return JSON.parse(localStorage.getItem(STORE_CASES)||'[]')}
@@ -285,23 +309,56 @@ function loadSelectedCase(){if(selectedCaseIndex===null){alert('Select saved loc
 function newPatient(){['patient_name','patient_id_file','age','gender','dob','phone','email','physician','operator','measurements','report_body','comment','impression','transcript'].forEach(function(id){set(id,'')});set('exam_date',new Date().toISOString().substring(0,10));set('study_title','ULTRASOUND REPORT');msg('New case ready.')}
 
 function signature(){if(!get('addSignature'))return '';return '\n\n'+get('signName')+'\n'+get('signTitle')+'\n'+get('signPractice')+'\nDate: '+new Date().toLocaleString()}
-function generateReport(){const body=get('report_body'),measurements=get('measurements'),transcript=get('transcript');if(!measurements&&!transcript&&!body){alert('Add transcript or measurements first.');return}const simpleReport='ULTRASOUND REPORT\n\nPatient: '+get('patient_name')+'\nPatient ID / File No: '+get('patient_id_file')+'\nAge / Gender: '+get('age')+' / '+get('gender')+'\nExam Date: '+get('exam_date')+'\nReferring Doctor: '+get('refDoctor')+'\n\nFindings\n'+(measurements||transcript||body)+'\n\nComment\n'+(get('comment')||'[Comment here.]')+'\n\nImpression\n'+(get('impression')||'• Findings as described above.')+signature();set('report_body',simpleReport);msg('Report generated locally.')}
+function generateReport(){const body=get('report_body'),measurements=get('measurements'),transcript=get('transcript');if(!measurements&&!transcript&&!body){alert('Add transcript or measurements first.');return}const simpleReport='ULTRASOUND REPORT\n\nPatient: '+get('patient_name')+'\nPatient ID / File No: '+get('patient_id_file')+'\nAge / Gender: '+get('age')+' / '+get('gender')+'\nDOB: '+get('dob')+'\nExam Date: '+get('exam_date')+'\nReferring Doctor: '+get('refDoctor')+'\n\nFindings\n'+(measurements||transcript||body)+'\n\nComment\n'+(get('comment')||'[Comment here.]')+'\n\nImpression\n'+(get('impression')||'• Findings as described above.')+signature();set('report_body',simpleReport);msg('Report generated locally.')}
 function rewriteAI(type){alert('AI rewrite needs OpenAI backend/API step. Local report generation is active.')}
 function shorten(){set('report_body',get('report_body').replace(/\n{3,}/g,'\n\n'));msg('Shortened.')}
 function printPdf(){const report=get('report_body');if(!report){alert('No report.');return}const w=window.open('','_blank');w.document.write('<pre style="font-family:Arial;white-space:pre-wrap;margin:40px;font-size:13px">'+esc(report)+'</pre>');w.document.close();w.print()}
 function downloadDoc(){const report=get('report_body');if(!report){alert('No report.');return}const blob=new Blob(['<html><body><pre style="font-family:Arial;white-space:pre-wrap">'+esc(report)+'</pre></body></html>'],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(get('patient_name')||'report').replace(/[^a-z0-9]/gi,'_')+'_report.doc';a.click()}
 function generateDocxPdf(){downloadDoc();setTimeout(printPdf,400)}
 function selectedDoctor(){return doctors().find(function(d){return d.name===get('refDoctor')})||{}}
-function emailDoctor(){const d=selectedDoctor();window.open('mailto:'+(d.email||'')+'?subject='+encodeURIComponent('Ultrasound report - '+get('patient_name'))+'&body='+encodeURIComponent(get('report_body')))}
-function emailPatient(){window.open('mailto:'+get('email')+'?subject='+encodeURIComponent('Ultrasound report')+'&body='+encodeURIComponent('Good day,\n\nPlease find your ultrasound report below.\n\n'+get('report_body')))}
-function sendWhatsAppDoctor(){const d=selectedDoctor();let phone=(d.whatsapp||'').replace(/[^0-9]/g,'');if(!phone){alert('No doctor WhatsApp number selected.');return}if(phone.startsWith('0'))phone='27'+phone.substring(1);window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Good day. Report for '+get('patient_name')+' is ready.'))}
-function sendWhatsAppPatient(){let phone=(get('phone')||'').replace(/[^0-9]/g,'');if(!phone){alert('No patient phone number entered.');return}if(phone.startsWith('0'))phone='27'+phone.substring(1);window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Good day. Your ultrasound report is ready.'))}
+function doctorByName(name){return doctors().find(function(d){return d.name===name})||{}}
+function emailDoctor(){const d=selectedDoctor();window.open('mailto:'+(d.email||'')+'?subject='+encodeURIComponent('Ultrasound report - '+get('patient_name'))+'&body='+encodeURIComponent(get('report_body')+'\n\nKind regards\nHendor L. Wynne'))}
+function emailPatient(){window.open('mailto:'+get('email')+'?subject='+encodeURIComponent('Ultrasound report')+'&body='+encodeURIComponent('Good day,\n\nPlease find your ultrasound report below.\n\n'+get('report_body')+'\n\nKind regards\nHendor L. Wynne'))}
+function sendWhatsAppDoctor(){const d=selectedDoctor();let phone=(d.whatsapp||'').replace(/[^0-9]/g,'');if(!phone){alert('No doctor WhatsApp number selected.');return}if(phone.startsWith('0'))phone='27'+phone.substring(1);window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Good day Doctor,\n\nReport for '+get('patient_name')+' is ready.\n\nKind regards\nHendor L. Wynne'))}
+function sendWhatsAppPatient(){let phone=(get('phone')||'').replace(/[^0-9]/g,'');if(!phone){alert('No patient phone number entered.');return}if(phone.startsWith('0'))phone='27'+phone.substring(1);window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Good day,\n\nYour ultrasound report is ready.\n\nKind regards\nHendor L. Wynne'))}
 function pasteClipboard(){navigator.clipboard.readText().then(function(text){set('measurements',get('measurements')+'\n'+text)}).catch(function(){alert('Use Ctrl+V inside the text box.')})}
 function startDictation(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){alert('Browser dictation not supported. Use Chrome/Edge.');return}recognition=new R();recognition.continuous=true;recognition.interimResults=false;recognition.lang='en-ZA';recognition.onresult=function(e){for(let i=e.resultIndex;i<e.results.length;i++){set('transcript',get('transcript')+e.results[i][0].transcript+' ')}};recognition.start()}
 function stopDictation(){if(recognition)recognition.stop()}
 function v16calc(){const cash=Number(get('v16_cash')||0),paid=Number(get('v16_paid')||0);set('v16_due',(cash-paid).toFixed(2))}
 async function v16save(){v16calc();const name=get('v16_name');if(!name){alert('Enter patient name.');return}set('patient_name',name);set('study_title',get('v16_study'));set('measurements','Reception / Billing\nPayment type: '+get('v16_payment')+'\nCash: R'+get('v16_cash')+'\nPaid: R'+get('v16_paid')+'\nDue: R'+get('v16_due'));set('exam_date',new Date().toISOString().substring(0,10));await saveCase()}
 async function v16loadCloud(){await loadCloudCases();const table=q('cloudQueue');table.innerHTML='';cloudRows.forEach(function(c){const dueMatch=String(c.measurements||'').match(/Due:\s*R?([0-9.]+)/i);const due=dueMatch?dueMatch[1]:'';const tr=document.createElement('tr');tr.innerHTML='<td>'+esc(c.patient_name||'')+'</td><td>'+esc(c.study_title||'')+'</td><td>'+esc(due?'R '+due:'')+'</td>';tr.onclick=function(){loadCloudRecord(c)};table.appendChild(tr)})}
+
+
+async function getAllAvailableRows(){
+  if(get('supabaseUrl')&&get('supabaseKey')){
+    await loadCloudCases();
+    if(cloudRows.length) return cloudRows;
+  }
+  return cases();
+}
+async function loadDoctorBatch(){
+  const doctor=get('batchDoctor');
+  const date=get('batchDate');
+  if(!doctor){alert('Select doctor first.');return}
+  if(!date){alert('Select date first.');return}
+  const all=await getAllAvailableRows();
+  batchRows=all.filter(function(c){return String(c.referring_doctor||c.refDoctor||'')===doctor && String(c.exam_date||c.created_at||'').substring(0,10)===date});
+  const table=q('batchTable');table.innerHTML='';
+  batchRows.forEach(function(c,i){const tr=document.createElement('tr');tr.innerHTML='<td><input type="checkbox" class="batchCheck" data-index="'+i+'" checked style="width:auto"></td><td>'+esc(c.patient_name||'')+'</td><td>'+esc((c.exam_date||c.created_at||'').substring(0,10))+'</td>';table.appendChild(tr)});
+  msg(batchRows.length+' batch patients loaded.');
+}
+function selectedBatchRows(){const selected=[];document.querySelectorAll('.batchCheck').forEach(function(chk){if(chk.checked)selected.push(batchRows[Number(chk.dataset.index)])});return selected}
+function batchCombinedText(){
+  const rows=selectedBatchRows();
+  let out='DOCTOR BATCH REPORTS\nDoctor: '+get('batchDoctor')+'\nDate: '+get('batchDate')+'\n\n';
+  rows.forEach(function(c,i){out+='==============================\n'+(i+1)+'. '+(c.patient_name||'')+'\nPatient ID / File No: '+(c.patient_id_file||'')+'\nStudy: '+(c.study_title||'')+'\nExam Date: '+(c.exam_date||'')+'\n\n'+(c.report_body||c.measurements||'[No report body saved]')+'\n\n'});
+  out+='\nKind regards\nHendor L. Wynne';
+  return out;
+}
+function printBatchReports(){const rows=selectedBatchRows();if(!rows.length){alert('No batch reports selected.');return}const w=window.open('','_blank');w.document.write('<pre style="font-family:Arial;white-space:pre-wrap;margin:40px;font-size:13px">'+esc(batchCombinedText())+'</pre>');w.document.close();w.print()}
+function emailBatchDoctor(){const doctor=get('batchDoctor');const d=doctorByName(doctor);if(!doctor){alert('Select doctor first.');return}const rows=selectedBatchRows();if(!rows.length){alert('No batch patients selected.');return}const subject='Ultrasound reports - '+get('batchDate');const body=get('batchMessage')+'\n\nPatients included:\n'+rows.map(function(c){return '- '+(c.patient_name||'')}).join('\n')+'\n\n'+batchCombinedText();window.open('mailto:'+(d.email||'')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body))}
+function whatsappBatchDoctor(){const doctor=get('batchDoctor');const d=doctorByName(doctor);let phone=(d.whatsapp||'').replace(/[^0-9]/g,'');if(!phone){alert('No WhatsApp number for selected doctor.');return}if(phone.startsWith('0'))phone='27'+phone.substring(1);const rows=selectedBatchRows();if(!rows.length){alert('No batch patients selected.');return}const text=get('batchMessage')+'\n\nPatients included:\n'+rows.map(function(c){return '- '+(c.patient_name||'')}).join('\n');window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(text))}
+function clearBatch(){batchRows=[];q('batchTable').innerHTML=''}
 
 function unlockLayout(){layoutUnlocked=true;document.body.classList.add('unlocked');msg('Layout unlocked. Drag title bars and resize orange corners.')}
 function lockLayout(){layoutUnlocked=false;document.body.classList.remove('unlocked');msg('Layout locked.')}
@@ -311,7 +368,7 @@ function resetLayout(){localStorage.removeItem(STORE_LAYOUT);location.reload()}
 document.addEventListener('mousedown',function(e){if(!layoutUnlocked)return;if(e.target.classList.contains('win-title')){const panel=e.target.parentElement;dragObj={panel:panel,dx:e.clientX-panel.offsetLeft,dy:e.clientY-panel.offsetTop};e.preventDefault()}if(e.target.classList.contains('resizer')){const panel=e.target.parentElement;resizeObj={panel:panel,x:e.clientX,y:e.clientY,w:panel.offsetWidth,h:panel.offsetHeight};e.preventDefault()}})
 document.addEventListener('mousemove',function(e){if(dragObj){dragObj.panel.style.left=(e.clientX-dragObj.dx)+'px';dragObj.panel.style.top=(e.clientY-dragObj.dy)+'px'}if(resizeObj){resizeObj.panel.style.width=Math.max(230,resizeObj.w+e.clientX-resizeObj.x)+'px';resizeObj.panel.style.height=Math.max(110,resizeObj.h+e.clientY-resizeObj.y)+'px'}})
 document.addEventListener('mouseup',function(){dragObj=null;resizeObj=null})
-window.onload=function(){ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',new Date().toISOString().substring(0,10));lockLayout()}
+window.onload=function(){ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',new Date().toISOString().substring(0,10));if(q('batchDate')&&!get('batchDate'))set('batchDate',new Date().toISOString().substring(0,10));lockLayout()}
 </script>
 </body>
 </html>
