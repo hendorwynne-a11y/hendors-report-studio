@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hendors Report Studio V16.3 Doctor Batch</title>
+<title>Hendors Report Studio V16.4 HD Dictation</title>
 <style>
 :root{--bg:#061523;--panel:#0b2135;--line:#9aa9bb;--field:#071726;--green:#18bf8f;--blue:#2563eb;--cyan:#19a7df;--purple:#7c3aed;--orange:#f59e0b;--red:#e11d48}
 *{box-sizing:border-box}
@@ -34,7 +34,7 @@ tr:hover{background:#12385b;cursor:pointer}.full{width:100%;margin-top:4px}.smal
 <body>
 <div id="loginScreen" class="login">
   <div class="login-card">
-    <h2>Hendors Report Studio V16.3</h2>
+    <h2>Hendors Report Studio V16.4</h2>
     <label>Username</label><input id="loginUser" value="admin">
     <label>Password</label><input id="loginPass" type="password" placeholder="admin123">
     <button class="green full" onclick="login()">Login</button>
@@ -42,7 +42,7 @@ tr:hover{background:#12385b;cursor:pointer}.full{width:100%;margin-top:4px}.smal
   </div>
 </div>
 
-<div class="title">🪶 Hendors Report Studio V16.3 — Doctor Batch</div>
+<div class="title">🪶 Hendors Report Studio V16.4 — Doctor Batch</div>
 <div class="toolbar">
   <button class="orange" onclick="unlockLayout()">Unlock Layout</button>
   <button class="green" onclick="lockLayout()">Lock Layout</button>
@@ -86,6 +86,7 @@ tr:hover{background:#12385b;cursor:pointer}.full{width:100%;margin-top:4px}.smal
 </fieldset>
 
 <fieldset><legend>Saved Cases</legend>
+<input id="cloudSearch" placeholder="Search patient / file / doctor / study / date" oninput="filterCloudCases()" style="width:100%;margin-bottom:6px">
 <button class="cyan full" onclick="loadCloudCases()">LOAD CLOUD CASES</button>
 <table><thead><tr><th>Patient</th><th>Date</th></tr></thead><tbody id="casesTable"></tbody></table>
 </fieldset>
@@ -98,10 +99,10 @@ tr:hover{background:#12385b;cursor:pointer}.full{width:100%;margin-top:4px}.smal
 <div class="grid3">
 <div><label>Patient Name</label><input id="patient_name"></div>
 <div><label>Patient ID / File No</label><input id="patient_id_file"></div>
-<div><label>Exam Date</label><input id="exam_date" type="text" placeholder="dd/mm/yyyy"></div>
+<div><label>Exam Date</label><input id="exam_date" type="date"></div>
 <div><label>Age</label><input id="age"></div>
 <div><label>Gender</label><select id="gender"><option value=""></option><option value="Male">Male</option><option value="Female">Female</option></select></div>
-<div><label>Date of Birth</label><input id="dob" type="text" placeholder="dd/mm/yyyy"></div>
+<div><label>Date of Birth</label><input id="dob" type="date"></div>
 <div><label>Phone</label><input id="phone"></div>
 <div><label>Email</label><input id="email"></div>
 <div><label>Perf. Physician</label><input id="physician"></div>
@@ -176,10 +177,10 @@ Use bullet points.</textarea>
 <section class="win" id="outputWin" style="left:1080px;top:740px;width:300px;height:160px">
 <div class="win-title">Output</div>
 <div class="win-body">
-<button class="blue" onclick="generateDocxPdf()">Generate DOCX + PDF</button>
-<button class="green" onclick="printPdf()">Print PDF Report</button>
-<button class="cyan" onclick="alert('Browser downloads go to Downloads folder.')">Open Output Folder</button>
-<button class="orange" onclick="alert('Image embed reserved.')">Add JPEG / PNG Report Images</button>
+<button class="blue full" onclick="generateDocxPdf()">Generate DOCX + PDF</button>
+<button class="green full" onclick="printPdf()">Print PDF Report</button>
+<button class="cyan full" onclick="alert('Browser downloads go to Downloads folder.')">Open Output Folder</button>
+<button class="orange full" onclick="alert('Image embed reserved.')">Add JPEG / PNG Report Images</button>
 </div><div class="resizer"></div>
 </section>
 
@@ -217,7 +218,7 @@ Use bullet points.</textarea>
 <div class="win-title">Doctor Batch / Date Box</div>
 <div class="win-body">
 <label>Doctor</label><select id="batchDoctor"></select>
-<label>Date</label><input id="batchDate" type="text" placeholder="dd/mm/yyyy">
+<label>Date</label><input id="batchDate" type="date">
 <div class="grid2" style="margin-top:8px">
 <button class="cyan" onclick="loadDoctorBatch()">Load Batch</button>
 <button class="orange" onclick="clearBatch()">Clear</button>
@@ -239,31 +240,73 @@ Hendor L. Wynne</textarea>
 </div>
 
 <script>
-const STORE_SETTINGS='hendors_v163_settings';
-const STORE_CASES='hendors_v163_local_cases';
-const STORE_DOCTORS='hendors_v163_doctors';
-const STORE_USERS='hendors_v163_users';
-const STORE_LAYOUT='hendors_v163_layout';
+const STORE_SETTINGS='hendors_v164_settings';
+const STORE_CASES='hendors_v164_local_cases';
+const STORE_DOCTORS='hendors_v164_doctors';
+const STORE_USERS='hendors_v164_users';
+const STORE_LAYOUT='hendors_v164_layout';
 let selectedCaseIndex=null,selectedDoctorIndex=null,recognition=null,dragObj=null,resizeObj=null,layoutUnlocked=false,cloudRows=[],batchRows=[];
-
-function pad2(n){return String(n).padStart(2,'0')}
-function todayDMY(){const d=new Date();return pad2(d.getDate())+'/'+pad2(d.getMonth()+1)+'/'+d.getFullYear()}
-function sameDMY(a,b){
-  if(!a||!b)return false;
-  a=String(a).substring(0,10);
-  b=String(b).substring(0,10);
-  if(a.includes('-')){
-    const p=a.split('-');
-    a=p[2]+'/'+p[1]+'/'+p[0];
-  }
-  return a===b;
-}
 
 function q(id){return document.getElementById(id)}
 function get(id){const e=q(id);return e?(e.type==='checkbox'?e.checked:e.value):''}
 function set(id,value){const e=q(id);if(!e)return;if(e.type==='checkbox')e.checked=!!value;else e.value=value||''}
 function msg(text){q('status').innerText=text;setTimeout(function(){q('status').innerText='Ready.'},3000)}
 function esc(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]})}
+
+
+const HD_DICTATION_FIXES={
+  "novel appearing":"normal appearing",
+  "normal a peering":"normal appearing",
+  "ultrasound demonstrate":"ultrasound demonstrates",
+  "ultrasound demonstrated":"ultrasound demonstrates",
+  "bank kidneys":"both kidneys",
+  "bank kid days":"both kidneys",
+  "bank kid knees":"both kidneys",
+  "bank recent":"both present",
+  "kid days":"kidneys",
+  "kid knees":"kidneys",
+  "kidney's":"kidneys",
+  "liver spleen and kid days":"liver, spleen and kidneys",
+  "liver spleen and kid knees":"liver, spleen and kidneys",
+  "goal bladder":"gallbladder",
+  "gold bladder":"gallbladder",
+  "gall bladder":"gallbladder",
+  "g b":"gallbladder",
+  "common bowel duct":"common bile duct",
+  "common ball duct":"common bile duct",
+  "renal tracked dilatation":"renal tract dilatation",
+  "renal tract dilation":"renal tract dilatation",
+  "hydroneph roses":"hydronephrosis",
+  "hydra nephrosis":"hydronephrosis",
+  "collecting sister":"collecting system",
+  "collecting sisters":"collecting systems",
+  "prostrate":"prostate",
+  "you terrace":"uterus",
+  "you trust":"uterus",
+  "endometrium stripe":"endometrial stripe",
+  "left overy":"left ovary",
+  "right overy":"right ovary",
+  "overy":"ovary",
+  "hypo echoic":"hypoechoic",
+  "hyper echoic":"hyperechoic",
+  "para umbilical":"paraumbilical",
+  "peri umbilical":"periumbilical"
+};
+
+function hdCleanDictation(text){
+  let cleaned=String(text||'');
+  Object.keys(HD_DICTATION_FIXES).forEach(function(key){
+    cleaned=cleaned.replace(new RegExp(key,'gi'),HD_DICTATION_FIXES[key]);
+  });
+  cleaned=cleaned.replace(/\s+/g,' ').trim();
+  if(cleaned.length>0){cleaned=cleaned.charAt(0).toUpperCase()+cleaned.slice(1)}
+  return cleaned;
+}
+
+function cleanCurrentTranscript(){
+  set('transcript',hdCleanDictation(get('transcript')));
+  msg('Transcript cleaned.');
+}
 
 function ensureUsers(){if(!localStorage.getItem(STORE_USERS)){localStorage.setItem(STORE_USERS,JSON.stringify({admin:{password:'admin123'}}))}}
 function login(){ensureUsers();const username=get('loginUser').trim();const password=get('loginPass').trim();const users=JSON.parse(localStorage.getItem(STORE_USERS)||'{}');if(users[username]&&users[username].password===password){q('loginScreen').classList.add('hidden');msg('Logged in.');return}alert('Incorrect username/password. Use admin / admin123')}
@@ -287,28 +330,30 @@ async function saveCase(){
   if(!data.patient_name){alert('Please enter patient name first.');return}
   const url=get('supabaseUrl'),key=get('supabaseKey');
 
+  const safePayload={
+    patient_name:data.patient_name,
+    patient_id_file:data.patient_id_file,
+    exam_date:data.exam_date,
+    dob:data.dob,
+    age:data.age,
+    gender:data.gender,
+    phone:data.phone,
+    email:data.email,
+    physician:data.physician,
+    operator:data.operator,
+    study_title:data.study_title,
+    referring_doctor:data.referring_doctor,
+    measurements:data.measurements,
+    transcript:data.transcript,
+    report_body:data.report_body,
+    comment:data.comment,
+    impression:data.impression,
+    report_status:'waiting'
+  };
+
   if(url&&key){
     try{
-      const r=await fetch(url+'/rest/v1/patients',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({
-  patient_name: data.patient_name,
-  patient_id_file: data.patient_id_file,
-  exam_date: data.exam_date,
-  dob: data.dob,
-  age: data.age,
-  gender: data.gender,
-  phone: data.phone,
-  email: data.email,
-  physician: data.physician,
-  operator: data.operator,
-  study_title: data.study_title,
-  referring_doctor: data.referring_doctor,
-  measurements: data.measurements,
-  transcript: data.transcript,
-  report_body: data.report_body,
-  comment: data.comment,
-  impression: data.impression,
-  report_status: 'waiting'
-})});
+      const r=await fetch(url+'/rest/v1/patients',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(safePayload)});
       if(r.ok){alert('Case saved to CLOUD ✔');await loadCloudCases();return}
       console.error(await r.text());
       alert('Cloud save failed. Saving locally instead.');
@@ -334,12 +379,32 @@ async function loadCloudCases(){
   }catch(e){console.error(e);alert('Cloud load failed.')}
 }
 
+
+function filterCloudCases(){
+  const search=(get('cloudSearch')||'').toLowerCase().trim();
+  const rows=(cloudRows&&cloudRows.length)?cloudRows:cases();
+  const filtered=rows.filter(function(c){
+    const text=[c.patient_name,c.patient_id_file,c.referring_doctor,c.study_title,c.exam_date,c.phone,c.email].join(' ').toLowerCase();
+    return text.includes(search);
+  });
+  const table=q('casesTable');table.innerHTML='';
+  filtered.forEach(function(c,index){
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+esc(c.patient_name||'')+'</td><td>'+esc((c.exam_date||c.created_at||c.saved_at||'').substring(0,10))+'</td>';
+    tr.onclick=function(){
+      if(cloudRows&&cloudRows.length){loadCloudRecord(c)}
+      else{selectedCaseIndex=index;loadSelectedCase()}
+    };
+    table.appendChild(tr);
+  });
+}
+
 function loadCloudRecord(c){
   set('patient_name',c.patient_name);set('patient_id_file',c.patient_id_file);set('exam_date',c.exam_date);set('age',c.age);set('gender',c.gender);set('dob',c.dob);set('phone',c.phone);set('email',c.email);set('physician',c.physician);set('operator',c.operator);set('study_title',c.study_title);set('refDoctor',c.referring_doctor);set('measurements',c.measurements);set('report_body',c.report_body);set('comment',c.comment);set('impression',c.impression);set('transcript',c.transcript);alert('Cloud case loaded ✔')
 }
 
 function loadSelectedCase(){if(selectedCaseIndex===null){alert('Select saved local case first.');return}const data=cases()[selectedCaseIndex];Object.keys(data).forEach(function(key){set(key,data[key])});if(data.referring_doctor)set('refDoctor',data.referring_doctor);alert('Case loaded.')}
-function newPatient(){['patient_name','patient_id_file','age','gender','dob','phone','email','physician','operator','measurements','report_body','comment','impression','transcript'].forEach(function(id){set(id,'')});set('exam_date',todayDMY());set('study_title','ULTRASOUND REPORT');msg('New case ready.')}
+function newPatient(){['patient_name','patient_id_file','age','gender','dob','phone','email','physician','operator','measurements','report_body','comment','impression','transcript'].forEach(function(id){set(id,'')});set('exam_date',new Date().toISOString().substring(0,10));set('study_title','ULTRASOUND REPORT');msg('New case ready.')}
 
 function signature(){if(!get('addSignature'))return '';return '\n\n'+get('signName')+'\n'+get('signTitle')+'\n'+get('signPractice')+'\nDate: '+new Date().toLocaleString()}
 function generateReport(){const body=get('report_body'),measurements=get('measurements'),transcript=get('transcript');if(!measurements&&!transcript&&!body){alert('Add transcript or measurements first.');return}const simpleReport='ULTRASOUND REPORT\n\nPatient: '+get('patient_name')+'\nPatient ID / File No: '+get('patient_id_file')+'\nAge / Gender: '+get('age')+' / '+get('gender')+'\nDOB: '+get('dob')+'\nExam Date: '+get('exam_date')+'\nReferring Doctor: '+get('refDoctor')+'\n\nFindings\n'+(measurements||transcript||body)+'\n\nComment\n'+(get('comment')||'[Comment here.]')+'\n\nImpression\n'+(get('impression')||'• Findings as described above.')+signature();set('report_body',simpleReport);msg('Report generated locally.')}
@@ -355,10 +420,30 @@ function emailPatient(){window.open('mailto:'+get('email')+'?subject='+encodeURI
 function sendWhatsAppDoctor(){const d=selectedDoctor();let phone=(d.whatsapp||'').replace(/[^0-9]/g,'');if(!phone){alert('No doctor WhatsApp number selected.');return}if(phone.startsWith('0'))phone='27'+phone.substring(1);window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Good day Doctor,\n\nReport for '+get('patient_name')+' is ready.\n\nKind regards\nHendor L. Wynne'))}
 function sendWhatsAppPatient(){let phone=(get('phone')||'').replace(/[^0-9]/g,'');if(!phone){alert('No patient phone number entered.');return}if(phone.startsWith('0'))phone='27'+phone.substring(1);window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Good day,\n\nYour ultrasound report is ready.\n\nKind regards\nHendor L. Wynne'))}
 function pasteClipboard(){navigator.clipboard.readText().then(function(text){set('measurements',get('measurements')+'\n'+text)}).catch(function(){alert('Use Ctrl+V inside the text box.')})}
-function startDictation(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){alert('Browser dictation not supported. Use Chrome/Edge.');return}recognition=new R();recognition.continuous=true;recognition.interimResults=false;recognition.lang='en-ZA';recognition.onresult=function(e){for(let i=e.resultIndex;i<e.results.length;i++){set('transcript',get('transcript')+e.results[i][0].transcript+' ')}};recognition.start()}
-function stopDictation(){if(recognition)recognition.stop()}
+function startDictation(){
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!R){alert('Browser dictation not supported. Use Chrome/Edge.');return}
+  recognition=new R();
+  recognition.continuous=true;
+  recognition.interimResults=false;
+  recognition.lang='en-ZA';
+  recognition.onresult=function(e){
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const raw=e.results[i][0].transcript;
+      const cleaned=hdCleanDictation(raw);
+      set('transcript',get('transcript')+cleaned+' ');
+    }
+  };
+  recognition.start();
+  msg('Dictation started.');
+}
+function stopDictation(){
+  if(recognition)recognition.stop();
+  cleanCurrentTranscript();
+  msg('Dictation stopped and cleaned.');
+}
 function v16calc(){const cash=Number(get('v16_cash')||0),paid=Number(get('v16_paid')||0);set('v16_due',(cash-paid).toFixed(2))}
-async function v16save(){v16calc();const name=get('v16_name');if(!name){alert('Enter patient name.');return}set('patient_name',name);set('study_title',get('v16_study'));set('measurements','Reception / Billing\nPayment type: '+get('v16_payment')+'\nCash: R'+get('v16_cash')+'\nPaid: R'+get('v16_paid')+'\nDue: R'+get('v16_due'));set('exam_date',todayDMY());await saveCase()}
+async function v16save(){v16calc();const name=get('v16_name');if(!name){alert('Enter patient name.');return}set('patient_name',name);set('study_title',get('v16_study'));set('measurements','Reception / Billing\nPayment type: '+get('v16_payment')+'\nCash: R'+get('v16_cash')+'\nPaid: R'+get('v16_paid')+'\nDue: R'+get('v16_due'));set('exam_date',new Date().toISOString().substring(0,10));await saveCase()}
 async function v16loadCloud(){await loadCloudCases();const table=q('cloudQueue');table.innerHTML='';cloudRows.forEach(function(c){const dueMatch=String(c.measurements||'').match(/Due:\s*R?([0-9.]+)/i);const due=dueMatch?dueMatch[1]:'';const tr=document.createElement('tr');tr.innerHTML='<td>'+esc(c.patient_name||'')+'</td><td>'+esc(c.study_title||'')+'</td><td>'+esc(due?'R '+due:'')+'</td>';tr.onclick=function(){loadCloudRecord(c)};table.appendChild(tr)})}
 
 
@@ -375,7 +460,7 @@ async function loadDoctorBatch(){
   if(!doctor){alert('Select doctor first.');return}
   if(!date){alert('Select date first.');return}
   const all=await getAllAvailableRows();
-  batchRows=all.filter(function(c){return String(c.referring_doctor||c.refDoctor||'')===doctor && sameDMY(c.exam_date||c.created_at||'',date)});
+  batchRows=all.filter(function(c){return String(c.referring_doctor||c.refDoctor||'')===doctor && String(c.exam_date||c.created_at||'').substring(0,10)===date});
   const table=q('batchTable');table.innerHTML='';
   batchRows.forEach(function(c,i){const tr=document.createElement('tr');tr.innerHTML='<td><input type="checkbox" class="batchCheck" data-index="'+i+'" checked style="width:auto"></td><td>'+esc(c.patient_name||'')+'</td><td>'+esc((c.exam_date||c.created_at||'').substring(0,10))+'</td>';table.appendChild(tr)});
   msg(batchRows.length+' batch patients loaded.');
@@ -393,6 +478,27 @@ function emailBatchDoctor(){const doctor=get('batchDoctor');const d=doctorByName
 function whatsappBatchDoctor(){const doctor=get('batchDoctor');const d=doctorByName(doctor);let phone=(d.whatsapp||'').replace(/[^0-9]/g,'');if(!phone){alert('No WhatsApp number for selected doctor.');return}if(phone.startsWith('0'))phone='27'+phone.substring(1);const rows=selectedBatchRows();if(!rows.length){alert('No batch patients selected.');return}const text=get('batchMessage')+'\n\nPatients included:\n'+rows.map(function(c){return '- '+(c.patient_name||'')}).join('\n');window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(text))}
 function clearBatch(){batchRows=[];q('batchTable').innerHTML=''}
 
+
+function applyHendorFinalLayout(){
+  const layout={
+    settingsWin:{left:'5px',top:'5px',width:'355px',height:'850px'},
+    caseWin:{left:'365px',top:'5px',width:'700px',height:'850px'},
+    promptWin:{left:'1070px',top:'5px',width:'420px',height:'245px'},
+    inputWin:{left:'1070px',top:'255px',width:'420px',height:'270px'},
+    dictWin:{left:'1495px',top:'5px',width:'260px',height:'115px'},
+    toolsWin:{left:'1495px',top:'125px',width:'260px',height:'205px'},
+    outputWin:{left:'1495px',top:'335px',width:'260px',height:'165px'},
+    sendWin:{left:'1495px',top:'505px',width:'260px',height:'180px'},
+    v16Win:{left:'1760px',top:'5px',width:'300px',height:'335px'},
+    queueWin:{left:'1760px',top:'350px',width:'300px',height:'280px'},
+    batchWin:{left:'2065px',top:'5px',width:'390px',height:'570px'},
+    transcriptWin:{left:'1070px',top:'690px',width:'1385px',height:'220px'}
+  };
+  Object.keys(layout).forEach(function(id){const w=q(id);if(w)Object.assign(w.style,layout[id])});
+  saveLayout();
+  alert('Hendor final layout saved ✔');
+}
+
 function unlockLayout(){layoutUnlocked=true;document.body.classList.add('unlocked');msg('Layout unlocked. Drag title bars and resize orange corners.')}
 function lockLayout(){layoutUnlocked=false;document.body.classList.remove('unlocked');msg('Layout locked.')}
 function saveLayout(){const layout={};document.querySelectorAll('.win').forEach(function(w){layout[w.id]={left:w.style.left,top:w.style.top,width:w.style.width,height:w.style.height}});localStorage.setItem(STORE_LAYOUT,JSON.stringify(layout));alert('Layout saved ✔')}
@@ -401,49 +507,8 @@ function resetLayout(){localStorage.removeItem(STORE_LAYOUT);location.reload()}
 document.addEventListener('mousedown',function(e){if(!layoutUnlocked)return;if(e.target.classList.contains('win-title')){const panel=e.target.parentElement;dragObj={panel:panel,dx:e.clientX-panel.offsetLeft,dy:e.clientY-panel.offsetTop};e.preventDefault()}if(e.target.classList.contains('resizer')){const panel=e.target.parentElement;resizeObj={panel:panel,x:e.clientX,y:e.clientY,w:panel.offsetWidth,h:panel.offsetHeight};e.preventDefault()}})
 document.addEventListener('mousemove',function(e){if(dragObj){dragObj.panel.style.left=(e.clientX-dragObj.dx)+'px';dragObj.panel.style.top=(e.clientY-dragObj.dy)+'px'}if(resizeObj){resizeObj.panel.style.width=Math.max(230,resizeObj.w+e.clientX-resizeObj.x)+'px';resizeObj.panel.style.height=Math.max(110,resizeObj.h+e.clientY-resizeObj.y)+'px'}})
 document.addEventListener('mouseup',function(){dragObj=null;resizeObj=null})
-window.onload=function(){ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',todayDMY());if(q('batchDate')&&!get('batchDate'))set('batchDate',todayDMY());lockLayout()}
-/* ===== V16.3 FINAL LAYOUT + BUTTON FIX ===== */
-
-function applyHendorFinalLayout(){
-  const layout = {
-    settingsWin:   {left:'5px',    top:'5px',   width:'355px', height:'850px'},
-    caseWin:       {left:'365px',  top:'5px',   width:'700px', height:'850px'},
-    promptWin:     {left:'1070px', top:'5px',   width:'420px', height:'245px'},
-    inputWin:      {left:'1070px', top:'255px', width:'420px', height:'270px'},
-    dictWin:       {left:'1495px', top:'5px',   width:'260px', height:'115px'},
-    toolsWin:      {left:'1495px', top:'125px', width:'260px', height:'205px'},
-    outputWin:     {left:'1495px', top:'335px', width:'260px', height:'165px'},
-    sendWin:       {left:'1495px', top:'505px', width:'260px', height:'180px'},
-    v16Win:        {left:'1760px', top:'5px',   width:'300px', height:'335px'},
-    queueWin:      {left:'1760px', top:'350px', width:'300px', height:'280px'},
-    batchWin:      {left:'2065px', top:'5px',   width:'390px', height:'570px'},
-    transcriptWin: {left:'1070px', top:'690px', width:'1385px',height:'220px'}
-  };
-
-  Object.keys(layout).forEach(function(id){
-    const w = q(id);
-    if(w) Object.assign(w.style, layout[id]);
-  });
-
-  saveLayout();
-  alert('Hendor final layout saved ✔');
-}
-
-/* Make output buttons full-width */
-(function fixOutputButtons(){
-  const output = q('outputWin');
-  if(output){
-    output.querySelectorAll('button').forEach(function(btn){
-      btn.classList.add('full');
-      btn.style.width = '100%';
-      btn.style.display = 'block';
-    });
-  }
-})();
-
-/* Optional: run this once from Console if needed:
-applyHendorFinalLayout()
-*/</script>
+window.onload=function(){ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',new Date().toISOString().substring(0,10));if(q('batchDate')&&!get('batchDate'))set('batchDate',new Date().toISOString().substring(0,10));lockLayout()}
+</script>
 </body>
 </html>
 
