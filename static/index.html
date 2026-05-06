@@ -130,7 +130,23 @@ function saveSettings(){
   localStorage.setItem('hendors_v16_settings', JSON.stringify(settings));
   alert('Settings saved ✔');
 }
-function loadSettings(){let x=localStorage.getItem(STORE_SETTINGS);if(!x)return;let o=JSON.parse(x);Object.keys(o).forEach(k=>set(k,o[k]))}
+function loadSettings(){
+  const saved = localStorage.getItem('hendors_v16_settings');
+  if(!saved) return;
+
+  const settings = JSON.parse(saved);
+
+  Object.keys(settings).forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+
+    if(el.type === 'checkbox'){
+      el.checked = settings[id];
+    } else {
+      el.value = settings[id] || '';
+    }
+  });
+}
 function doctors(){return JSON.parse(localStorage.getItem(STORE_DOCTORS)||'[]')} function saveDoctors(a){localStorage.setItem(STORE_DOCTORS,JSON.stringify(a))}
 function addDoctor(){let name=get('docName').trim();if(!name){alert('Enter doctor name.');return}let a=doctors();a.push({name:name,email:get('docEmail').trim(),whatsapp:get('docWhatsapp').trim()});saveDoctors(a);set('docName','');set('docEmail','');set('docWhatsapp','');renderDoctors();alert('Doctor saved ✔')}
 function renderDoctors(){let a=doctors();q('doctorsTable').innerHTML=a.map((d,i)=>'<tr onclick="selectedDoctorIndex='+i+';msg(\\'Doctor selected\\')"><td>'+h(d.name)+'</td><td>'+h(d.email)+'</td><td>'+h(d.whatsapp)+'</td></tr>').join('');q('refDoctor').innerHTML='<option></option>'+a.map(d=>'<option>'+h(d.name)+'</option>').join('')}
