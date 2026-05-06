@@ -40,7 +40,58 @@ function q(id){return document.getElementById(id)}function get(id){let e=q(id);r
 function ensureUsers(){if(!localStorage.getItem(U))localStorage.setItem(U,JSON.stringify({admin:{password:'admin123'}}))}function login(){ensureUsers();let u=get('loginUser').trim(),p=get('loginPass');let users=JSON.parse(localStorage.getItem(U)||'{}');if(users[u]&&users[u].password===p){q('loginScreen').classList.add('hidden');msg('Logged in.')}else alert('Incorrect username/password. Use admin / admin123')}function logout(){set('loginPass','');q('loginScreen').classList.remove('hidden')}
 function saveSettings(){let ids=['apiKey','textModel','speechModel','supabaseUrl','supabaseKey','rootFolder','addSignature','signName','signTitle','signPractice','prompt'],o={};ids.forEach(id=>o[id]=get(id));localStorage.setItem(S,JSON.stringify(o));alert('Settings saved ✔')}function loadSettings(){let x=localStorage.getItem(S);if(!x)return;let o=JSON.parse(x);Object.keys(o).forEach(k=>set(k,o[k]))}
 function doctors(){return JSON.parse(localStorage.getItem(D)||'[]')}function saveDoctors(a){localStorage.setItem(D,JSON.stringify(a))}function addDoctor(){let name=get('docName').trim();if(!name){alert('Enter doctor name.');return}let a=doctors();a.push({name,email:get('docEmail').trim(),whatsapp:get('docWhatsapp').trim()});saveDoctors(a);set('docName','');set('docEmail','');set('docWhatsapp','');renderDoctors();alert('Doctor saved ✔')}function renderDoctors(){let a=doctors();q('doctorsTable').innerHTML='';q('refDoctor').innerHTML='<option></option>';a.forEach((d,i)=>{let tr=document.createElement('tr');tr.innerHTML='<td>'+esc(d.name)+'</td><td>'+esc(d.email)+'</td><td>'+esc(d.whatsapp)+'</td>';tr.onclick=()=>{selectedDoctorIndex=i;msg('Doctor selected')};q('doctorsTable').appendChild(tr);let op=document.createElement('option');op.textContent=d.name;q('refDoctor').appendChild(op)})}function deleteSelectedDoctor(){if(selectedDoctorIndex===null){alert('Select doctor first.');return}let a=doctors();a.splice(selectedDoctorIndex,1);selectedDoctorIndex=null;saveDoctors(a);renderDoctors()}
-function cases(){return JSON.parse(localStorage.getItem(C)||'[]')}function saveCases(a){localStorage.setItem(C,JSON.stringify(a))}function caseData(){return{patient_name:get('patient_name'),patient_id:get('patient_id_file'),exam_date:get('exam_date'),age:get('age'),gender:get('gender'),dob:get('dob'),phone:get('phone'),email:get('email'),physician:get('physician'),operator:get('operator'),study_title:get('study_title'),refDoctor:get('refDoctor'),measurements:get('measurements'),report_body:get('report_body'),comment:get('comment'),impression:get('impression'),transcript:get('transcript'),saved_at:new Date().toISOString()}}function saveCase(){let d=caseData();if(!d.patient_name){alert('Please enter patient name first.');return}let a=cases();a.push(d);saveCases(a);renderCases();alert('Case saved ✔')}function renderCases(){q('casesTable').innerHTML='';cases().forEach((c,i)=>{let tr=document.createElement('tr');tr.innerHTML='<td>'+esc(c.patient_name)+'</td><td>'+esc((c.exam_date||c.saved_at||'').substring(0,10))+'</td>';tr.onclick=()=>{selectedCaseIndex=i;msg('Case selected')};q('casesTable').appendChild(tr)})}function loadSelectedCase(){if(selectedCaseIndex===null){alert('Select case first.');return}let c=cases()[selectedCaseIndex];Object.keys(c).forEach(k=>set(k,c[k]))}function newPatient(){['patient_name','patient_id_file','age','gender','dob','phone','email','physician','operator','measurements','report_body','comment','impression','transcript'].forEach(id=>set(id,''));set('exam_date',new Date().toISOString().substring(0,10));set('study_title','ULTRASOUND REPORT')}
+function cases(){return JSON.parse(localStorage.getItem(C)||'[]')}function saveCases(a)async function saveCase(){
+  const d = caseData();
+
+  if(!d.patient_name){
+    alert('Please enter patient name first.');
+    return;
+  }
+
+  const url = get('supabaseUrl');
+  const key = get('supabaseKey');
+
+  if(!url || !key){
+    alert('Supabase URL/key missing. Save Settings first.');
+    return;
+  }
+
+  const r = await fetch(url + '/rest/v1/patients', {
+    method: 'POST',
+    headers: {
+      apikey: key,
+      Authorization: 'Bearer ' + key,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    },
+    body: JSON.stringify({
+      patient_name: d.patient_name,
+      patient_id_file: d.patient_id,
+      exam_date: d.exam_date,
+      age: d.age,
+      gender: d.gender,
+      dob: d.dob,
+      phone: d.phone,
+      email: d.email,
+      physician: d.physician,
+      operator: d.operator,
+      study_title: d.study_title,
+      referring_doctor: d.refDoctor,
+      measurements: d.measurements,
+      report_body: d.report_body,
+      comment: d.comment,
+      impression: d.impression,
+      transcript: d.transcript
+    })
+  });
+
+  if(r.ok){
+    alert('Case saved to CLOUD ✔');
+    await loadCloudCases();
+  } else {
+    alert('Cloud save failed.');
+  }
+}
 function signature(){return get('addSignature')?'\n\n'+get('signName')+'\n'+get('signTitle')+'\n'+get('signPractice')+'\nDate: '+new Date().toLocaleString():''}async function callOpenAI(messages){let key=get('apiKey'),model=get('textModel')||'gpt-4o-mini';if(!key)throw new Error('OpenAI API key missing.');let r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model,temperature:0.2,messages})});let d=await r.json();if(!r.ok)throw new Error(d.error?.message||'AI failed.');return d.choices[0].message.content}async function generateReport(){try{let ctx='Patient: '+get('patient_name')+'\nAge/Gender: '+get('age')+' / '+get('gender')+'\nStudy: '+get('study_title')+'\nClinical/Measurements:\n'+get('measurements')+'\nTranscript:\n'+get('transcript');let out=await callOpenAI([{role:'system',content:get('prompt')},{role:'user',content:ctx}]);set('report_body',out.trim()+signature())}catch(e){alert(e.message)}}async function rewriteAI(type){try{let out=await callOpenAI([{role:'system',content:get('prompt')},{role:'user',content:'Rewrite cleanly:\n\n'+get('report_body')}]);set('report_body',out.trim())}catch(e){alert(e.message)}}function shorten(){set('report_body',get('report_body').replace(/\n{3,}/g,'\n\n'))}
 function printPdf(){let r=get('report_body');if(!r){alert('No report.');return}let w=window.open('','_blank');w.document.write('<pre style="font-family:Arial;white-space:pre-wrap;margin:40px">'+esc(r)+'</pre>');w.document.close();w.print()}function downloadDoc(){let r=get('report_body');if(!r){alert('No report.');return}let b=new Blob(['<html><body><pre style="font-family:Arial;white-space:pre-wrap">'+esc(r)+'</pre></body></html>'],{type:'application/msword'});let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(get('patient_name')||'report')+'_report.doc';a.click()}function generateDocxPdf(){downloadDoc();setTimeout(printPdf,400)}function selectedDoctor(){return doctors().find(d=>d.name===get('refDoctor'))||{}}function emailDoctor(){let d=selectedDoctor();window.open('mailto:'+(d.email||'')+'?subject='+encodeURIComponent('Ultrasound report - '+get('patient_name'))+'&body='+encodeURIComponent(get('report_body')))}function emailPatient(){window.open('mailto:'+get('email')+'?subject=Ultrasound report&body='+encodeURIComponent(get('report_body')))}function sendWhatsAppDoctor(){
   let d = selectedDoctor();
@@ -76,5 +127,59 @@ function sendWhatsAppPatient(){
 }
 function v16calc(){set('v16_due',(Number(get('v16_cash')||0)-Number(get('v16_paid')||0)).toFixed(2))}async function v16save(){v16calc();let url=get('supabaseUrl'),key=get('supabaseKey');let p={name:get('v16_name'),study:get('v16_study'),payment_type:get('v16_payment'),cash:Number(get('v16_cash')||0),paid:Number(get('v16_paid')||0),due:Number(get('v16_due')||0),created_at:new Date().toISOString()};if(!p.name){alert('Enter patient name.');return}if(!url||!key){alert('Add Supabase URL/key in Settings.');return}let r=await fetch(url+'/rest/v1/patients',{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(p)});alert(r.ok?'Saved to CLOUD ✔':'Cloud save failed.')}async function v16loadCloud(){let url=get('supabaseUrl'),key=get('supabaseKey');if(!url||!key){alert('Add Supabase settings first.');return}let r=await fetch(url+'/rest/v1/patients?select=*&order=created_at.desc',{headers:{apikey:key,Authorization:'Bearer '+key}});let d=await r.json();if(!r.ok){alert('Cloud load failed.');return}q('cloudQueue').innerHTML='';d.forEach(p=>{let tr=document.createElement('tr');tr.innerHTML='<td>'+esc(p.name)+'</td><td>'+esc(p.study)+'</td><td>R '+Number(p.due||0).toFixed(2)+'</td>';q('cloudQueue').appendChild(tr)})}
 function unlockLayout(){layoutUnlocked=true;document.body.classList.add('unlocked');msg('Layout unlocked')}function lockLayout(){layoutUnlocked=false;document.body.classList.remove('unlocked');msg('Layout locked')}function saveLayout(){let o={};document.querySelectorAll('.win').forEach(w=>o[w.id]={left:w.style.left,top:w.style.top,width:w.style.width,height:w.style.height});localStorage.setItem(L,JSON.stringify(o));alert('Layout saved ✔')}function loadLayout(){let x=localStorage.getItem(L);if(!x)return;let o=JSON.parse(x);Object.keys(o).forEach(id=>{let w=q(id);if(w)Object.assign(w.style,o[id])})}function resetLayout(){localStorage.removeItem(L);location.reload()}
-document.addEventListener('mousedown',e=>{if(!layoutUnlocked)return;if(e.target.classList.contains('win-title')){let p=e.target.parentElement;dragObj={p,dx:e.clientX-p.offsetLeft,dy:e.clientY-p.offsetTop};e.preventDefault()}if(e.target.classList.contains('resizer')){let p=e.target.parentElement;resizeObj={p,x:e.clientX,y:e.clientY,w:p.offsetWidth,h:p.offsetHeight};e.preventDefault()}});document.addEventListener('mousemove',e=>{if(dragObj){dragObj.p.style.left=(e.clientX-dragObj.dx)+'px';dragObj.p.style.top=(e.clientY-dragObj.dy)+'px'}if(resizeObj){resizeObj.p.style.width=Math.max(230,resizeObj.w+e.clientX-resizeObj.x)+'px';resizeObj.p.style.height=Math.max(110,resizeObj.h+e.clientY-resizeObj.y)+'px'}});document.addEventListener('mouseup',()=>{dragObj=null;resizeObj=null});window.onload=()=>{ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',new Date().toISOString().substring(0,10));lockLayout()}
+document.addEventListener('mousedown',e=>{if(!layoutUnlocked)return;if(e.target.classList.contains('win-title')){let p=e.target.parentElement;dragObj={p,dx:e.clientX-p.offsetLeft,dy:e.clientY-p.offsetTop};e.preventDefault()}if(e.target.classList.contains('resizer')){let p=e.target.parentElement;resizeObj={p,x:e.clientX,y:e.clientY,w:p.offsetWidth,h:p.offsetHeight};e.preventDefault()}});document.addEventListener('mousemove',e=>{if(dragObj){dragObj.p.style.left=(e.clientX-dragObj.dx)+'px';dragObj.p.style.top=(e.clientY-dragObj.dy)+'px'}if(resizeObj){resizeObj.p.style.width=Math.max(230,resizeObj.w+e.clientX-resizeObj.x)+'px';resizeObj.p.style.height=Math.max(110,resizeObj.h+e.clientY-resizeObj.y)+'px'}});document.addEventListener('mouseup',()=>{dragObj=null;resizeObj=null});
+  async function loadCloudCases(){
+  const url = get('supabaseUrl');
+  const key = get('supabaseKey');
+
+  if(!url || !key) return;
+
+  const r = await fetch(url + '/rest/v1/patients?select=*&order=created_at.desc', {
+    headers: {
+      apikey: key,
+      Authorization: 'Bearer ' + key
+    }
+  });
+
+  const data = await r.json();
+
+  if(!r.ok){
+    alert('Could not load cloud cases.');
+    return;
+  }
+
+  q('casesTable').innerHTML = '';
+
+  data.forEach((c, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + esc(c.patient_name) + '</td><td>' +
+      esc((c.exam_date || c.created_at || '').substring(0,10)) +
+      '</td>';
+
+    tr.onclick = () => {
+      set('patient_name', c.patient_name);
+      set('patient_id_file', c.patient_id_file);
+      set('exam_date', c.exam_date);
+      set('age', c.age);
+      set('gender', c.gender);
+      set('dob', c.dob);
+      set('phone', c.phone);
+      set('email', c.email);
+      set('physician', c.physician);
+      set('operator', c.operator);
+      set('study_title', c.study_title);
+      set('refDoctor', c.referring_doctor);
+      set('measurements', c.measurements);
+      set('report_body', c.report_body);
+      set('comment', c.comment);
+      set('impression', c.impression);
+      set('transcript', c.transcript);
+      alert('Cloud case loaded.');
+    };
+
+    q('casesTable').appendChild(tr);
+  });
+}
+  window.onload=()=loadCloudCases();>{ensureUsers();loadSettings();loadLayout();renderDoctors();renderCases();if(!get('exam_date'))set('exam_date',new Date().toISOString().substring(0,10));lockLayout()}
 </script></body></html>
