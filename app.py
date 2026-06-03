@@ -1,149 +1,125 @@
-from flask import Flask, request, jsonify, send_from_directory, session
-from werkzeug.security import generate_password_hash, check_password_hash
-from pathlib import Path
-from datetime import datetime
-import sqlite3, os
-
-APP_DIR = Path(__file__).parent.resolve()
-DB_PATH = APP_DIR / "hendors.db"
+from flask import Flask, render_template, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+import os
 
 app = Flask(__name__)
-app.secret_key = "super-secret-key"
 
-def db():
-    con = sqlite3.connect(DB_PATH)
-    con.row_factory = sqlite3.Row
-    return con
+database_url = os.getenv("DATABASE_URL")
 
-def init_db():
-    con = db()
-    cur = con.cursor()
+if database_url:
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+else:
+    database_url = "sqlite:///v17_bookings.db"
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS users(
-        id INTEGER PRIMARY KEY,
-        username TEXT UNIQUE,
-        password_hash TEXT,
-        role TEXT
-    )
-    """)
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    cur.execute("SELECT COUNT(*) as c FROM users")
-    if cur.fetchone()["c"] == 0:
-        cur.execute(
-            "INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
-            ("admin", generate_password_hash("admin123"), "admin")
-        )
+db = SQLAlchemy(app)
 
-    con.commit()
-    con.close()
+
+class Booking(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    patient_name = db.Column(db.String(200))
+    dob = db.Column(db.String(50))
+    contact = db.Column(db.String(100))
+    email = db.Column(db.String(200))
+    payment_type = db.Column(db.String(100))
+    branch = db.Column(db.String(200))
+    scan_type = db.Column(db.String(200))
+    appointment_date = db.Column(db.String(100))
+    appointment_time = db.Column(db.String(100))
+    history = db.Column(db.Text)
+    referrer = db.Column(db.String(200))
+    notes = db.Column(db.Text)
+
+
+with app.app_context():
+    db.create_all()
+
 
 @app.route("/")
 def home():
-    return send_from_directory(APP_DIR / "static", "index.html")
+    return render_template("landing.html")
 
-# 🔐 LOGIN
-@app.route("/api/login", methods=["POST"])
-def login():
-    data = request.json
-    username = data.get("username","").lower()
-    password = data.get("password","")
 
-    con = db()
-    user = con.execute(
-        "SELECT * FROM users WHERE lower(username)=?",
-        (username,)
-    ).fetchone()
-    con.close()
+@app.route("/index")
+def index():
+    return render_template("index.html")
 
-    if user and check_password_hash(user["password_hash"], password):
-        session["user"] = {"username": user["username"], "role": user["role"]}
-        return jsonify(ok=True)
 
-    return jsonify(ok=False), 401
+@app.route("/patient-portal")
+def patient_portal():
+    return render_template("patient_portal.html")
 
-# 🔐 CHANGE PASSWORD
-@app.route("/api/change-password", methods=["POST"])
-def change_password():
-    if "user" not in session:
-        return jsonify(error="Login required"), 401
 
-    data = request.json
-    new_password = data.get("new_password")
+@app.route("/reporting")
+def reporting():
+    return render_template("reporting.html")
 
-    con = db()
-    con.execute(
-        "UPDATE users SET password_hash=? WHERE username=?",
-        (generate_password_hash(new_password), session["user"]["username"])
+
+@app.route("/admin-bookings")
+def admin_bookings():
+    return render_template("admin_bookings.html")
+
+
+@app.route("/api/bookings", methods=["GET"])
+def get_bookings():
+    bookings = Booking.query.order_by(Booking.id.desc()).all()
+
+    return jsonify([
+        {
+            "id": b.id,
+            "patientName": b.patient_name,
+            "dob": b.dob,
+            "contact": b.contact,
+            "email": b.email,
+            "paymentType": b.payment_type,
+            "branch": b.branch,
+            "scanType": b.scan_type,
+            "appointmentDate": b.appointment_date,
+            "appointmentTime": b.appointment_time,
+            "history": b.history,
+            "referrer": b.referrer,
+            "notes": b.notes
+        }
+        for b in bookings
+    ])
+
+
+@app.route("/api/bookings", methods=["POST"])
+def add_booking():
+    data = request.get_json()
+
+    booking = Booking(
+        patient_name=data.get("patientName"),
+        dob=data.get("dob"),
+        contact=data.get("contact"),
+        email=data.get("email"),
+        payment_type=data.get("paymentType"),
+        branch=data.get("branch"),
+        scan_type=data.get("scanType"),
+        appointment_date=data.get("appointmentDate"),
+        appointment_time=data.get("appointmentTime"),
+        history=data.get("history"),
+        referrer=data.get("referrer"),
+        notes=data.get("notes")
     )
-    con.commit()
-    con.close()
 
-    return jsonify(ok=True)
+    db.session.add(booking)
+    db.session.commit()
 
-# 👤 ADMIN: CREATE USER
-@app.route("/api/create-user", methods=["POST"])
-def create_user():
-    if session.get("user", {}).get("role") != "admin":
-        return jsonify(error="Admin only"), 403
+    return jsonify({"message": "Booking saved successfully"})
 
-    data = request.json
 
-    con = db()
-    con.execute(
-        "INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
-        (
-            data["username"],
-            generate_password_hash(data["password"]),
-            data["role"]
-        )
-    )
-    con.commit()
-    con.close()
+@app.route("/api/bookings/<int:booking_id>", methods=["DELETE"])
+def delete_booking(booking_id):
+    booking = Booking.query.get_or_404(booking_id)
+    db.session.delete(booking)
+    db.session.commit()
 
-    return jsonify(ok=True)
+    return jsonify({"message": "Booking deleted"})
 
-# 👤 ADMIN: LIST USERS
-@app.route("/api/users")
-def users():
-    if session.get("user", {}).get("role") != "admin":
-        return jsonify(error="Admin only"), 403
-
-    con = db()
-    rows = con.execute("SELECT username,role FROM users").fetchall()
-    con.close()
-
-    return jsonify([dict(r) for r in rows])
-
-# 🚀 QUICK SETUP
-@app.route("/api/admin-setup")
-def admin_setup():
-    con = db()
-
-    for u,p,r in [
-        ("admin","admin123","admin"),
-        ("sono","Sono123!","sonographer"),
-        ("rec","Rec123!","reception")
-    ]:
-        try:
-            con.execute(
-                "INSERT INTO users(username,password_hash,role) VALUES(?,?,?)",
-                (u, generate_password_hash(p), r)
-            )
-        except:
-            pass
-
-    con.commit()
-    con.close()
-
-    return jsonify(ok=True)
-
-@app.route("/health")
-def health():
-    return "ok"
-    
-init_db()
 
 if __name__ == "__main__":
-    init_db()
-    app.run(host="0.0.0.0", port=1420)
+    app.run(debug=True)
