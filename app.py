@@ -1,3 +1,4 @@
+```python
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os
@@ -8,7 +9,11 @@ database_url = os.getenv("DATABASE_URL")
 
 if database_url:
     if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+        database_url = database_url.replace(
+            "postgres://",
+            "postgresql://",
+            1
+        )
 else:
     database_url = "sqlite:///v17_bookings.db"
 
@@ -20,15 +25,19 @@ db = SQLAlchemy(app)
 
 class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     patient_name = db.Column(db.String(200))
     dob = db.Column(db.String(50))
     contact = db.Column(db.String(100))
     email = db.Column(db.String(200))
+
     payment_type = db.Column(db.String(100))
     branch = db.Column(db.String(200))
     scan_type = db.Column(db.String(200))
+
     appointment_date = db.Column(db.String(100))
     appointment_time = db.Column(db.String(100))
+
     history = db.Column(db.Text)
     referrer = db.Column(db.String(200))
     notes = db.Column(db.Text)
@@ -65,30 +74,34 @@ def admin_bookings():
 
 @app.route("/api/bookings", methods=["GET"])
 def get_bookings():
-    bookings = Booking.query.order_by(Booking.id.desc()).all()
+
+    bookings = Booking.query.order_by(
+        Booking.id.desc()
+    ).all()
 
     return jsonify([
         {
-            "id": b.id,
-            "patientName": b.patient_name,
-            "dob": b.dob,
-            "contact": b.contact,
-            "email": b.email,
-            "paymentType": b.payment_type,
-            "branch": b.branch,
-            "scanType": b.scan_type,
-            "appointmentDate": b.appointment_date,
-            "appointmentTime": b.appointment_time,
-            "history": b.history,
-            "referrer": b.referrer,
-            "notes": b.notes
+            "id": booking.id,
+            "patientName": booking.patient_name,
+            "dob": booking.dob,
+            "contact": booking.contact,
+            "email": booking.email,
+            "paymentType": booking.payment_type,
+            "branch": booking.branch,
+            "scanType": booking.scan_type,
+            "appointmentDate": booking.appointment_date,
+            "appointmentTime": booking.appointment_time,
+            "history": booking.history,
+            "referrer": booking.referrer,
+            "notes": booking.notes
         }
-        for b in bookings
+        for booking in bookings
     ])
 
 
 @app.route("/api/bookings", methods=["POST"])
 def add_booking():
+
     data = request.get_json()
 
     booking = Booking(
@@ -109,17 +122,26 @@ def add_booking():
     db.session.add(booking)
     db.session.commit()
 
-    return jsonify({"message": "Booking saved successfully"})
+    return jsonify({
+        "message": "Booking saved successfully"
+    })
 
 
 @app.route("/api/bookings/<int:booking_id>", methods=["DELETE"])
 def delete_booking(booking_id):
-    booking = Booking.query.get_or_404(booking_id)
+
+    booking = Booking.query.get_or_404(
+        booking_id
+    )
+
     db.session.delete(booking)
     db.session.commit()
 
-    return jsonify({"message": "Booking deleted"})
+    return jsonify({
+        "message": "Booking deleted"
+    })
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+```
